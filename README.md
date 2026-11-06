@@ -35,3 +35,6 @@ Alerts are simulated locally. They use the supplied `assets/Alert_sound.mp3`, an
 
 ## Important
 This is a front-end simulation: generated telemetry, member counts, distance values, battles, and tower activity are not live server data. A real community directory with authenticated private family information requires a backend, database, and access control. Do not put sensitive/private records in public JavaScript files.
+
+## Search names
+The welcome/search field accepts a family's displayed name, its file ID (for example `ember`), or its title. Matching ignores capitalization, spaces, punctuation, and an optional leading `@`.
