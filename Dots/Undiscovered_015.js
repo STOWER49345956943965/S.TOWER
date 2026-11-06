@@ -1,0 +1,21 @@
+export default {
+  "id": "dot-015",
+  "name": "Undiscovered_015",
+  "title": "Unconfirmed Signal",
+  "discovered": false,
+  "color": "#ff67c9",
+  "daysAway": 12082,
+  "x": 1170,
+  "y": 786,
+  "group": "DUSK REGION",
+  "badgeUri": "",
+  "badgeBackgroundUri": "",
+  "bannerUri": "",
+  "profileBackgroundUri": "",
+  "description": "An unidentified signal. Public telemetry reveals distance only.",
+  "lore": "This record has not been discovered. Its archive remains encrypted and unavailable.",
+  "members": null,
+  "elevations": null,
+  "status": "UNCONFIRMED",
+  "connections": 3
+};

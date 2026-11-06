@@ -1,32 +1,59 @@
-# Family Atlas — GitHub Pages starter
+# FAMILYATLAS — GitHub Pages starter
 
-A neon sci-fi family network atlas with searchable discovered families, procedurally generated undiscovered signals, privacy-redacted unknown profiles, and five simulated live server towers.
+A static, interactive family-network atlas inspired by the supplied visual reference.
 
 ## Run locally
-Because the project uses JavaScript modules, serve the folder with a local static server:
-- `python -m http.server 8000`
-- open `http://localhost:8000`
+Because this project uses JavaScript modules, run it through a local static server rather than opening `index.html` directly. In VS Code, use the **Live Server** extension, or run:
+
+```bash
+python -m http.server 8000
+```
+
+Then visit `http://localhost:8000`.
 
 ## Publish on GitHub Pages
-1. Create a GitHub repository and upload the contents of this folder.
-2. Open **Settings → Pages**.
-3. Choose **Deploy from a branch**, select `main` and `/ (root)`, then save.
+1. Create a GitHub repository.
+2. Upload the contents of this folder (keep the `Dots` and `Towers` folders).
+3. Open **Settings → Pages**.
+4. Choose **Deploy from a branch**, select `main` and `/ (root)`, then save.
 
-## Customize
-- `Dots/`: one independent JS config per discovered family.
-- `Towers/`: one independent JS config per tower.
-- `src/data.js`: register each config file here.
-- `src/main.js`: map behavior, search, profiles and live tower simulation.
-- `styles.css`: visual system, glows, motion, layout.
+## Customize each dot
+Every dot has its own JavaScript file in `Dots/`. Example:
 
-This is a front-end prototype. Tower telemetry and procedural unknown signals are simulated locally; connect a backend/database before using real private member or server data.
+```js
+export default {
+  id: "dot-001",
+  name: "Far_Signal",
+  title: "Far Signal",
+  discovered: true,
+  color: "#f06bff",
+  daysAway: 2554,
+  x: 400,
+  y: 260,
+  group: "MID-DARK",
+  badgeUri: "https://your-site.com/badge.gif",
+  badgeBackgroundUri: "https://your-site.com/badge-background.png",
+  bannerUri: "https://your-site.com/banner.jpg",
+  profileBackgroundUri: "https://your-site.com/avatar.gif",
+  description: "Short public description.",
+  lore: "Long family lore goes here.",
+  members: 1200,
+  elevations: 18,
+  connections: 12,
+  status: "KNOWN SIGNAL"
+};
+```
 
+- `discovered: true` makes the dot clickable and reveals its public family card.
+- `discovered: false` leaves it visible but locks members, elevations and lore.
+- `daysAway` remains visible for undiscovered dots.
+- `color`, `x`, `y`, `group`, `title`, image URIs and text are independently editable.
+- To add a new dot file, also import it and add it to the `dots` array in `Dots/index.js`. Keep IDs unique.
 
-## Customizing each family
-Each file in `Dots/` is an independent family profile. Edit its `discovered`, `name`, `title`, `color`, `daysAway`, `group`, `badge.uri`, `bannerUri`, `badgeBackgroundUri`, `lore`, `members`, and `elevations` values. `bannerUri` and `badgeBackgroundUri` accept a local asset path or an image URL. Keep `discovered: false` to show a distance-only undiscovered signal. Add the matching import and array entry in `src/data.js` when creating a new family file.
+The ten initially discovered records are the only clickable family dots. The other 90 records are visible, undiscovered signals.
 
-## Congregation alerts
-`assets/congregation-alert.mp3` is the supplied alert sound. The front-end schedules fictional raid/congregation events at irregular intervals. These are visual simulations only and do not represent real server activity or private member data.
+## Customize server towers
+Each tower has an individual config in `Towers/`. The five towers are imported through `Towers/index.js`.
 
-## Map scale
-The atlas currently creates 420 procedural undiscovered signals in addition to the individually configured family dots and five tower nodes. Change the loop count in `src/main.js` to adjust the generated signal density.
+## Notes
+This is a front-end prototype. Membership counts, elevations, tower telemetry, alerts, raids and reinforcements are simulated locally; they are not connected to real accounts or live servers. Do not put private personal information in a public GitHub repository. Use image URLs that permit public embedding.

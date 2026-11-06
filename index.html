@@ -1,72 +1,97 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#080d19"><title>FAMILY ATLAS // SIGNAL NETWORK</title>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#050b16">
+  <title>FAMILYATLAS // Interconnected Server Archive</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="noise"></div><div class="scanlines"></div>
+  <div class="scanlines"></div><div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
   <header class="topbar">
-    <a class="brand" href="#"><span class="brand-mark">✳</span><span>FAMILY<span class="cyan">ATLAS</span><small>INTERCONNECTED SERVER ARCHIVE</small></span></a>
-    <div class="top-status"><i></i> NETWORK MONITORING <span class="separator">/</span> <span id="clock">00:00:00</span></div>
-    <div class="top-actions"><button id="legendBtn" class="ghost-btn">LEGEND</button><button id="searchBtn" class="primary-btn">FIND FAMILY ↗</button></div>
+    <div class="brand"><span class="brand-mark">✳</span><div><b>FAMILY<span>ATLAS</span></b><small>INTERCONNECTED SERVER ARCHIVE</small></div></div>
+    <div class="network-status"><i></i> NETWORK MONITORING <span>/</span><time id="clock">--:--:--</time></div>
+    <button class="icon-btn mobile-menu" id="menuToggle" aria-label="Toggle menu">☰</button>
   </header>
-
-  <main class="app-shell">
-    <aside class="left-rail">
-      <div class="rail-label">ATLAS CONTROL</div>
-      <button class="rail-item active" id="mapMode"><span>⌘</span> NETWORK MAP</button>
-      <button class="rail-item" id="towerMode"><span>▥</span> SERVER TOWERS <b>05</b></button>
-      <div class="rail-divider"></div>
-      <div class="rail-label">LIVE OVERVIEW</div>
-      <div class="metric"><small>DISCOVERED FAMILIES</small><strong>10<span>/∞</span></strong><em>PUBLIC RECORDS</em></div>
-      <div class="metric"><small>ACTIVE TOWERS</small><strong>05<span>/05</span></strong><em>SIMULATED SIGNAL</em></div>
-      <div class="metric"><small>KNOWN REGIONS</small><strong>07</strong><em>CONNECTED CLUSTERS</em></div>
-      <div class="rail-divider"></div>
-      <div class="rail-label">MAP KEY</div>
-      <div class="key-row"><i class="key-dot discovered"></i> Discovered family</div>
-      <div class="key-row"><i class="key-dot unknown"></i> Unconfirmed signal</div>
-      <div class="key-row"><i class="key-line"></i> Known connection</div>
-      <div class="key-row"><i class="key-tower"></i> Server tower</div>
-      <div class="rail-footer"><span class="pulse"></span> ALL SYSTEMS NOMINAL<br><small>ATLAS BUILD 0.9.4 // LOCAL</small></div>
-    </aside>
-
-    <section class="map-stage" id="mapStage">
-      <div class="map-head"><div><div class="eyebrow">LIVE TOPOLOGY <span>•</span> GLOBAL VIEW</div><h1>THE <b>FAMILY</b> NETWORK</h1><p>Explore known lineages, distant signals, and active server infrastructure.</p></div>
-        <div class="map-tools"><button id="zoomOut" aria-label="Zoom out">−</button><span id="zoomLabel">100%</span><button id="zoomIn" aria-label="Zoom in">+</button><button id="resetView" title="Reset view">⌖</button></div>
-      </div>
-      <div class="map-viewport" id="mapViewport">
-        <div class="map-grid"></div><div class="map-vignette"></div><div id="raidOverlay" class="raid-overlay" aria-live="polite"></div>
-        <svg id="connections" class="connections"></svg><div id="nodesLayer" class="nodes-layer"></div>
-        <div class="map-coordinates">SECTOR 07-A <span>•</span> COORDINATES UNLOCKED</div>
-        <div class="map-hint">DRAG TO PAN <span>·</span> SCROLL TO ZOOM <span>·</span> SELECT A SIGNAL</div>
-        <div class="map-loading" id="mapLoading"><div class="loader-ring"></div><span>SYNCING ATLAS...</span></div>
-      </div>
-      <div class="map-bottom"><span><i class="tiny-pulse"></i> SIGNALS REFRESHED LIVE</span><span id="signalCount">0 SIGNALS DETECTED</span><span>UNKNOWN SIGNALS ARE PARTIALLY REDACTED</span></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="side-label">ATLAS CONTROL</div>
+    <button class="nav-item active" data-view="map"><span>⌘</span> NETWORK MAP</button>
+    <button class="nav-item" data-view="towers"><span>▥</span> SERVER TOWERS <b>05</b></button>
+    <div class="side-rule"></div>
+    <div class="side-label">LIVE OVERVIEW</div>
+    <div class="stat-card"><small>DISCOVERED FAMILIES</small><strong id="statDiscovered">10<span>/∞</span></strong><em>PUBLIC RECORDS</em></div>
+    <div class="stat-card"><small>ACTIVE TOWERS</small><strong>05<span>/05</span></strong><em>SIMULATED SIGNAL</em></div>
+    <div class="stat-card"><small>KNOWN REGIONS</small><strong id="statRegions">07</strong><em>CONNECTED CLUSTERS</em></div>
+    <div class="side-rule"></div>
+    <div class="side-label">MAP KEY</div>
+    <div class="legend"><span class="legend-dot cyan"></span> Discovered family</div>
+    <div class="legend"><span class="legend-dot grey"></span> Undiscovered signal</div>
+    <div class="legend"><span class="legend-line"></span> Known connection</div>
+    <div class="legend"><span class="legend-tower">▤</span> Server tower</div>
+    <div class="sidebar-foot"><i></i> ALL SYSTEMS NOMINAL</div>
+  </aside>
+  <main class="main">
+    <section class="heading">
+      <div><div class="eyebrow">LIVE TOPOLOGY&nbsp; · &nbsp;GLOBAL VIEW</div><h1>THE FAMILY <span>NETWORK</span></h1><p>Explore known lineages, distant signals, and active server infrastructure.</p></div>
+      <div class="map-controls"><button id="zoomOut" class="icon-btn">−</button><span id="zoomValue">100%</span><button id="zoomIn" class="icon-btn">+</button><button id="resetView" class="icon-btn">⌖</button></div>
     </section>
-    <aside class="right-rail">
-      <div class="rail-label">SELECTED SECTOR</div><div class="sector-empty" id="sectorEmpty"><div class="empty-orbit">◎</div><b>NO SIGNAL SELECTED</b><p>Select a discovered family or tower on the map to inspect its public record.</p></div>
-      <div class="rail-label region-label">REGION INDEX</div><div id="regionList" class="region-list"></div>
-      <div class="right-foot">DATA CLASSIFICATION: <b>PARTIAL PUBLIC</b></div>
-    </aside>
+    <section class="map-shell" id="mapShell">
+      <div class="map-grid"></div><div class="sector-tag">SECTOR 07-A&nbsp; · &nbsp;COORDINATES UNLOCKED</div>
+      <div class="map-hint">DRAG TO PAN · SCROLL TO ZOOM · SELECT A SIGNAL</div>
+      <svg id="network" viewBox="0 0 1600 900" role="img" aria-label="Interactive family network map">
+        <defs>
+          <filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="softGlow"><feGaussianBlur stdDeviation="8"/></filter>
+        </defs>
+        <g id="mapTransform"></g>
+      </svg>
+      <div class="map-vignette"></div>
+    </section>
+    <section class="tower-view hidden" id="towerView">
+      <div class="tower-heading"><div><div class="eyebrow">INFRASTRUCTURE MONITORING</div><h2>SERVER <span>TOWERS</span></h2><p>Five relay structures · live simulated telemetry</p></div><div class="live-pill"><i></i> LIVE FEED</div></div>
+      <div class="tower-grid" id="towerGrid"></div>
+    </section>
   </main>
 
-  <div class="modal-backdrop show" id="welcomeModal">
+  <div class="welcome-overlay" id="welcome">
     <div class="welcome-card">
-      <div class="welcome-orb"><span>✳</span><i></i></div>
-      <div class="eyebrow">CONNECTION REQUEST // 001</div><h2>WHAT SERVER<br>ARE YOU <b>FROM?</b></h2>
-      <p>Enter a known family username to locate its signal in the atlas and open its public archive.</p>
-      <form id="welcomeForm"><label for="familyInput">FAMILY USERNAME</label><div class="search-field"><span>⌕</span><input id="familyInput" autocomplete="off" placeholder="e.g. The_Knights_Family" required><button type="submit">LOCATE ↗</button></div><div class="suggestions"><span>KNOWN SIGNALS</span><button type="button" data-name="The_Knights_Family">The_Knights_Family</button><button type="button" data-name="Hon's_Family">Hon's_Family</button></div></form>
-      <div class="welcome-foot"><span>◈ SECURE ATLAS ACCESS</span><span>UNKNOWN FAMILIES REMAIN REDACTED</span></div>
+      <div class="welcome-symbol">✳</div><div class="eyebrow">FAMILYATLAS // IDENTIFICATION PROTOCOL</div>
+      <h2>WHERE ARE YOU<br><span>FROM?</span></h2>
+      <p>Enter your family or dot username to locate your signal in the network.</p>
+      <form id="welcomeForm"><input id="welcomeSearch" autocomplete="off" placeholder="Enter family username..." required><button>LOCATE SIGNAL <span>↗</span></button></form>
+      <button class="explore-link" id="exploreAll">OR EXPLORE THE NETWORK <span>→</span></button>
+      <div class="welcome-foot"><i></i> PUBLIC ARCHIVE · PRIVATE RECORDS PROTECTED</div>
     </div>
   </div>
 
-  <div class="modal-backdrop alert-backdrop" id="alertModal"><div class="alert-card"><div class="alert-scan"></div><div class="alert-kicker"><i></i> PRIORITY NETWORK EVENT // INCOMING</div><div class="alert-emblem">!</div><h2>CONGREGATION<br><b>ALERT!</b></h2><p id="alertText">Two families are fighting.</p><div class="alert-actions"><button id="alertNo" type="button">IGNORE SIGNAL</button><button id="alertYes" type="button">YES, INVESTIGATE ↗</button></div><small>ATLAS EVENT SIMULATION · LIVE VIEW AVAILABLE</small></div></div>
-  <audio id="congregationAudio" preload="auto" src="assets/congregation-alert.mp3"></audio>
-  <div class="modal-backdrop" id="profileModal"><div class="profile-card" id="profileCard"></div></div>
-  <div class="modal-backdrop" id="legendModal"><div class="small-modal"><button class="close-modal" data-close="legendModal">×</button><div class="eyebrow">ATLAS REFERENCE</div><h2>HOW TO READ THE MAP</h2><p>Each signal represents a family or server tower. Discovered families expose a public profile. Undiscovered signals show only their distance from the selected family.</p><div class="key-row"><i class="key-dot discovered"></i> Discovered / profile available</div><div class="key-row"><i class="key-dot unknown"></i> Undiscovered / distance only</div><div class="key-row"><i class="key-tower"></i> Server tower / live simulated activity</div></div></div>
-  <script type="module" src="src/main.js"></script>
-</body></html>
+  <div class="modal-backdrop hidden" id="profileBackdrop">
+    <article class="profile-panel" id="profilePanel">
+      <button class="close-btn" id="closeProfile">✕</button>
+      <div class="profile-banner" id="profileBanner"><div class="banner-shade"></div><div class="profile-badge-bg" id="profileBadgeBg"></div><div class="profile-topline"><span id="profileType">FAMILY RECORD</span><span id="profileDistance">— DAYS AWAY</span></div></div>
+      <div class="profile-content">
+        <div class="profile-title-row"><div class="profile-avatar" id="profileAvatar">✳</div><div class="profile-name-wrap"><h2 id="profileName">Family</h2><div class="profile-subtitle" id="profileSubtitle">KNOWN SIGNAL</div></div><span class="record-badge" id="recordBadge">DISCOVERED</span></div>
+        <p class="profile-description" id="profileDescription"></p>
+        <div class="profile-stats" id="profileStats"></div>
+        <div class="profile-section"><div class="section-title">ARCHIVE LORE <span>01 / RECORD</span></div><p id="profileLore"></p></div>
+        <div class="profile-section"><div class="section-title">SIGNAL DETAILS <span>02 / TELEMETRY</span></div><div class="detail-grid" id="profileDetails"></div></div>
+        <div class="profile-private hidden" id="privateMessage"><span>◈</span><div><b>UNDISCOVERED FAMILY</b><p>The family you're viewing wasn't discovered by your family. Members, elevations and lore are classified. Only the distance signal is available.</p></div></div>
+        <div class="profile-actions"><button id="focusProfile">FOCUS SIGNAL ↗</button><button class="secondary" id="closeProfile2">CLOSE RECORD</button></div>
+      </div>
+    </article>
+  </div>
+
+  <div class="alert-toast hidden" id="alertToast">
+    <div class="alert-top"><span><i></i> CONGREGATION ALERT!</span><button id="dismissAlert">✕</button></div>
+    <h3 id="alertTitle">TWO FAMILIES ARE FIGHTING</h3><p id="alertText">Unusual activity detected in a distant region.</p>
+    <div class="alert-actions"><button id="viewAlert">VIEW EVENT ↗</button><button class="secondary" id="ignoreAlert">DISMISS</button></div>
+  </div>
+  <div class="event-overlay hidden" id="eventOverlay">
+    <div class="event-panel"><button class="close-btn" id="closeEvent">✕</button><div class="eyebrow"><i class="pulse"></i> LIVE CONGREGATION EVENT</div><h2 id="eventName">REGIONAL CONFLICT</h2><p id="eventDescription"></p><div class="event-map" id="eventMap"></div><div class="event-status"><span>EVENT STATUS</span><b id="eventStatus">ACTIVE · SIMULATED</b></div><button class="event-jump" id="eventJump">JUMP TO REGION ↗</button></div>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

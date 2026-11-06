@@ -1,0 +1,21 @@
+export default {
+  "id": "dot-005",
+  "name": "Night_Index",
+  "title": "Night Index",
+  "discovered": true,
+  "color": "#ff4f83",
+  "daysAway": 1290,
+  "x": 796,
+  "y": 464,
+  "group": "DUSK REGION",
+  "badgeUri": "",
+  "badgeBackgroundUri": "",
+  "bannerUri": "",
+  "profileBackgroundUri": "",
+  "description": "A quiet index node with unusual connection paths.",
+  "lore": "A low-visibility index node. Its signal is faint, but its connections reach farther than the map initially suggests.",
+  "members": 8260,
+  "elevations": 49,
+  "status": "KNOWN SIGNAL",
+  "connections": 21
+};

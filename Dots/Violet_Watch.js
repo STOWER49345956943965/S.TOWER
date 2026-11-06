@@ -1,0 +1,21 @@
+export default {
+  "id": "dot-002",
+  "name": "Violet_Watch",
+  "title": "Violet Watch",
+  "discovered": true,
+  "color": "#b58aff",
+  "daysAway": 891,
+  "x": 281,
+  "y": 201,
+  "group": "MID-OSCOR",
+  "badgeUri": "",
+  "badgeBackgroundUri": "",
+  "bannerUri": "",
+  "profileBackgroundUri": "",
+  "description": "An observatory lineage tracking the outer network.",
+  "lore": "A quiet observatory family. Their signal appears in repeating cycles, with records describing a patient network of distant contacts.",
+  "members": 1284,
+  "elevations": 61,
+  "status": "KNOWN SIGNAL",
+  "connections": 8
+};

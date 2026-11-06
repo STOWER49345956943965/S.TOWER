@@ -1,0 +1,21 @@
+export default {
+  "id": "dot-003",
+  "name": "Ember_Court",
+  "title": "Ember Court",
+  "discovered": true,
+  "color": "#ff9c45",
+  "daysAway": 598,
+  "x": 438,
+  "y": 286,
+  "group": "OUTER VEIL",
+  "badgeUri": "",
+  "badgeBackgroundUri": "",
+  "bannerUri": "",
+  "profileBackgroundUri": "",
+  "description": "A bright relay court with a persistent regional signal.",
+  "lore": "Known for a bright, persistent relay signature. Fragments of the archive describe a court built around loyalty and shared history.",
+  "members": 446,
+  "elevations": 68,
+  "status": "KNOWN SIGNAL",
+  "connections": 20
+};

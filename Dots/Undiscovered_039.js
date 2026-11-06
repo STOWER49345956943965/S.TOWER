@@ -1,0 +1,21 @@
+export default {
+  "id": "dot-039",
+  "name": "Undiscovered_039",
+  "title": "Unconfirmed Signal",
+  "discovered": false,
+  "color": "#ffb14d",
+  "daysAway": 5169,
+  "x": 1157,
+  "y": 384,
+  "group": "NORTH ARRAY",
+  "badgeUri": "",
+  "badgeBackgroundUri": "",
+  "bannerUri": "",
+  "profileBackgroundUri": "",
+  "description": "An unidentified signal. Public telemetry reveals distance only.",
+  "lore": "This record has not been discovered. Its archive remains encrypted and unavailable.",
+  "members": null,
+  "elevations": null,
+  "status": "UNCONFIRMED",
+  "connections": 2
+};

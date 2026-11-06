@@ -1,0 +1,21 @@
+export default {
+  "id": "dot-010",
+  "name": "Blue_Archive",
+  "title": "Blue Archive",
+  "discovered": true,
+  "color": "#398bff",
+  "daysAway": 418,
+  "x": 296,
+  "y": 303,
+  "group": "DUSK REGION",
+  "badgeUri": "",
+  "badgeBackgroundUri": "",
+  "bannerUri": "",
+  "profileBackgroundUri": "",
+  "description": "A preserved archive with a steady blue signal.",
+  "lore": "A blue archive node with a steady signal. Its records reference preserved histories and links to distant regions.",
+  "members": 3616,
+  "elevations": 23,
+  "status": "KNOWN SIGNAL",
+  "connections": 8
+};

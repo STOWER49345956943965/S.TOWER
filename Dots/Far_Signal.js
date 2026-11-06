@@ -1,0 +1,21 @@
+export default {
+  "id": "dot-001",
+  "name": "Far_Signal",
+  "title": "Far Signal",
+  "discovered": true,
+  "color": "#f06bff",
+  "daysAway": 2554,
+  "x": 109,
+  "y": 124,
+  "group": "MID-DARK",
+  "badgeUri": "",
+  "badgeBackgroundUri": "",
+  "bannerUri": "",
+  "profileBackgroundUri": "",
+  "description": "A distant family signal registered in the public atlas.",
+  "lore": "An old signal that has remained visible across the outer network. Its archive references a long-running lineage and a watchful presence beyond the inner sectors.",
+  "members": 1567,
+  "elevations": 60,
+  "status": "KNOWN SIGNAL",
+  "connections": 11
+};

@@ -1,0 +1,21 @@
+export default {
+  "id": "dot-062",
+  "name": "Undiscovered_062",
+  "title": "Unconfirmed Signal",
+  "discovered": false,
+  "color": "#8bbcff",
+  "daysAway": 1430,
+  "x": 1002,
+  "y": 575,
+  "group": "MID-OSCOR",
+  "badgeUri": "",
+  "badgeBackgroundUri": "",
+  "bannerUri": "",
+  "profileBackgroundUri": "",
+  "description": "An unidentified signal. Public telemetry reveals distance only.",
+  "lore": "This record has not been discovered. Its archive remains encrypted and unavailable.",
+  "members": null,
+  "elevations": null,
+  "status": "UNCONFIRMED",
+  "connections": 2
+};
