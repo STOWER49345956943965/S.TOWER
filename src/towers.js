@@ -1,0 +1,1 @@
+import a from './Towers/Tower_01.js'; import b from './Towers/Tower_02.js'; import c from './Towers/Tower_03.js'; import d from './Towers/Tower_04.js'; import e from './Towers/Tower_05.js'; export default [a,b,c,d,e];
