@@ -8,7 +8,10 @@ export default {
   group: "Glass Reach",
   discovered: true,
   badge: { uri: "assets/badges/glass.svg", label: "GLASS" },
+  // Optional custom artwork. Use a local path (assets/...) or a hosted image URL.
+  profileImageUri: "",
   bannerUri: "",
+  badgeBackgroundUri: "",
   lore: "A small but stable family built around old signal routes.",
   members: 51,
   elevations: 9,

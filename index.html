@@ -39,7 +39,7 @@
         <div class="map-tools"><button id="zoomOut" aria-label="Zoom out">−</button><span id="zoomLabel">100%</span><button id="zoomIn" aria-label="Zoom in">+</button><button id="resetView" title="Reset view">⌖</button></div>
       </div>
       <div class="map-viewport" id="mapViewport">
-        <div class="map-grid"></div><div class="map-vignette"></div>
+        <div class="map-grid"></div><div class="map-vignette"></div><div id="raidOverlay" class="raid-overlay" aria-live="polite"></div>
         <svg id="connections" class="connections"></svg><div id="nodesLayer" class="nodes-layer"></div>
         <div class="map-coordinates">SECTOR 07-A <span>•</span> COORDINATES UNLOCKED</div>
         <div class="map-hint">DRAG TO PAN <span>·</span> SCROLL TO ZOOM <span>·</span> SELECT A SIGNAL</div>
@@ -64,6 +64,8 @@
     </div>
   </div>
 
+  <div class="modal-backdrop alert-backdrop" id="alertModal"><div class="alert-card"><div class="alert-scan"></div><div class="alert-kicker"><i></i> PRIORITY NETWORK EVENT // INCOMING</div><div class="alert-emblem">!</div><h2>CONGREGATION<br><b>ALERT!</b></h2><p id="alertText">Two families are fighting.</p><div class="alert-actions"><button id="alertNo" type="button">IGNORE SIGNAL</button><button id="alertYes" type="button">YES, INVESTIGATE ↗</button></div><small>ATLAS EVENT SIMULATION · LIVE VIEW AVAILABLE</small></div></div>
+  <audio id="congregationAudio" preload="auto" src="assets/congregation-alert.mp3"></audio>
   <div class="modal-backdrop" id="profileModal"><div class="profile-card" id="profileCard"></div></div>
   <div class="modal-backdrop" id="legendModal"><div class="small-modal"><button class="close-modal" data-close="legendModal">×</button><div class="eyebrow">ATLAS REFERENCE</div><h2>HOW TO READ THE MAP</h2><p>Each signal represents a family or server tower. Discovered families expose a public profile. Undiscovered signals show only their distance from the selected family.</p><div class="key-row"><i class="key-dot discovered"></i> Discovered / profile available</div><div class="key-row"><i class="key-dot unknown"></i> Undiscovered / distance only</div><div class="key-row"><i class="key-tower"></i> Server tower / live simulated activity</div></div></div>
   <script type="module" src="src/main.js"></script>

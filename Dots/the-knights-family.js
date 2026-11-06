@@ -8,7 +8,10 @@ export default {
   group: "Mid-dark",
   discovered: true,
   badge: { uri: "assets/badges/knights.svg", label: "KNIGHTS" },
+  // Optional custom artwork. Use a local path (assets/...) or a hosted image URL.
+  profileImageUri: "",
   bannerUri: "",
+  badgeBackgroundUri: "",
   lore: "A long-running lineage of connected servers, archived paths, and inherited signals.",
   members: 200,
   elevations: 38,

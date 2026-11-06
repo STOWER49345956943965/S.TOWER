@@ -8,7 +8,10 @@ export default {
   group: "Mid-dark",
   discovered: true,
   badge: { uri: "assets/badges/hon.svg", label: "HON" },
+  // Optional custom artwork. Use a local path (assets/...) or a hosted image URL.
+  profileImageUri: "",
   bannerUri: "",
+  badgeBackgroundUri: "",
   lore: "A distant branch whose signal still flickers across the atlas. Its history is sealed from outside families.",
   members: 100,
   elevations: 24,

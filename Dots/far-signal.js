@@ -8,7 +8,10 @@ export default {
   group: "Far Meridian",
   discovered: true,
   badge: { uri: "assets/badges/signal.svg", label: "SIGNAL" },
+  // Optional custom artwork. Use a local path (assets/...) or a hosted image URL.
+  profileImageUri: "",
   bannerUri: "",
+  badgeBackgroundUri: "",
   lore: "A distant signal family. Its public record is intentionally brief.",
   members: 28,
   elevations: 5,

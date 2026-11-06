@@ -8,7 +8,10 @@ export default {
   group: "Outer Dark",
   discovered: true,
   badge: { uri: "assets/badges/circuit.svg", label: "CIRCUIT" },
+  // Optional custom artwork. Use a local path (assets/...) or a hosted image URL.
+  profileImageUri: "",
   bannerUri: "",
+  badgeBackgroundUri: "",
   lore: "A submerged network of paths that rarely appears on the surface map.",
   members: 78,
   elevations: 15,

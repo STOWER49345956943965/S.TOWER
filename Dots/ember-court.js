@@ -8,7 +8,10 @@ export default {
   group: "Cinder Belt",
   discovered: true,
   badge: { uri: "assets/badges/ember.svg", label: "EMBER" },
+  // Optional custom artwork. Use a local path (assets/...) or a hosted image URL.
+  profileImageUri: "",
   bannerUri: "",
+  badgeBackgroundUri: "",
   lore: "A warm cluster of linked systems with a reputation for resilient relays.",
   members: 142,
   elevations: 31,

@@ -8,7 +8,10 @@ export default {
   group: "Far Meridian",
   discovered: true,
   badge: { uri: "assets/badges/redwood.svg", label: "REDWOOD" },
+  // Optional custom artwork. Use a local path (assets/...) or a hosted image URL.
+  profileImageUri: "",
   bannerUri: "",
+  badgeBackgroundUri: "",
   lore: "A far-reaching branch connected by a very old route.",
   members: 117,
   elevations: 21,

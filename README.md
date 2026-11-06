@@ -20,3 +20,13 @@ Because the project uses JavaScript modules, serve the folder with a local stati
 - `styles.css`: visual system, glows, motion, layout.
 
 This is a front-end prototype. Tower telemetry and procedural unknown signals are simulated locally; connect a backend/database before using real private member or server data.
+
+
+## Customizing each family
+Each file in `Dots/` is an independent family profile. Edit its `discovered`, `name`, `title`, `color`, `daysAway`, `group`, `badge.uri`, `bannerUri`, `badgeBackgroundUri`, `lore`, `members`, and `elevations` values. `bannerUri` and `badgeBackgroundUri` accept a local asset path or an image URL. Keep `discovered: false` to show a distance-only undiscovered signal. Add the matching import and array entry in `src/data.js` when creating a new family file.
+
+## Congregation alerts
+`assets/congregation-alert.mp3` is the supplied alert sound. The front-end schedules fictional raid/congregation events at irregular intervals. These are visual simulations only and do not represent real server activity or private member data.
+
+## Map scale
+The atlas currently creates 420 procedural undiscovered signals in addition to the individually configured family dots and five tower nodes. Change the loop count in `src/main.js` to adjust the generated signal density.

@@ -8,7 +8,10 @@ export default {
   group: "Blue Reach",
   discovered: true,
   badge: { uri: "assets/badges/archive.svg", label: "ARCHIVE" },
+  // Optional custom artwork. Use a local path (assets/...) or a hosted image URL.
+  profileImageUri: "",
   bannerUri: "",
+  badgeBackgroundUri: "",
   lore: "A quiet archive node preserving fragments of old routes and forgotten connections.",
   members: 86,
   elevations: 17,
