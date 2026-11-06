@@ -1,97 +1,49 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#050b16">
-  <title>FAMILYATLAS // Interconnected Server Archive</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#070817">
+<title>FAMILY ATLAS // Deep-space network</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="scanlines"></div><div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+<div id="app">
+  <canvas id="map"></canvas>
+  <div class="vignette"></div><div class="scanlines"></div>
   <header class="topbar">
-    <div class="brand"><span class="brand-mark">✳</span><div><b>FAMILY<span>ATLAS</span></b><small>INTERCONNECTED SERVER ARCHIVE</small></div></div>
-    <div class="network-status"><i></i> NETWORK MONITORING <span>/</span><time id="clock">--:--:--</time></div>
-    <button class="icon-btn mobile-menu" id="menuToggle" aria-label="Toggle menu">☰</button>
+    <div class="brand"><span class="brand-mark">✳</span><div><b>FAMILY ATLAS</b><small>INTERSERVER CARTOGRAPHY // LIVE FIELD</small></div></div>
+    <div class="telemetry"><span class="pulse"></span> FIELD ONLINE <i></i><span id="visible-count">90,000,000</span> NODES INDEXED</div>
+    <div class="top-actions"><button id="alert-now" class="quiet">SIMULATE ALERT</button><button id="help" class="quiet">CONTROLS ?</button></div>
   </header>
-  <aside class="sidebar" id="sidebar">
-    <div class="side-label">ATLAS CONTROL</div>
-    <button class="nav-item active" data-view="map"><span>⌘</span> NETWORK MAP</button>
-    <button class="nav-item" data-view="towers"><span>▥</span> SERVER TOWERS <b>05</b></button>
-    <div class="side-rule"></div>
-    <div class="side-label">LIVE OVERVIEW</div>
-    <div class="stat-card"><small>DISCOVERED FAMILIES</small><strong id="statDiscovered">10<span>/∞</span></strong><em>PUBLIC RECORDS</em></div>
-    <div class="stat-card"><small>ACTIVE TOWERS</small><strong>05<span>/05</span></strong><em>SIMULATED SIGNAL</em></div>
-    <div class="stat-card"><small>KNOWN REGIONS</small><strong id="statRegions">07</strong><em>CONNECTED CLUSTERS</em></div>
-    <div class="side-rule"></div>
-    <div class="side-label">MAP KEY</div>
-    <div class="legend"><span class="legend-dot cyan"></span> Discovered family</div>
-    <div class="legend"><span class="legend-dot grey"></span> Undiscovered signal</div>
-    <div class="legend"><span class="legend-line"></span> Known connection</div>
-    <div class="legend"><span class="legend-tower">▤</span> Server tower</div>
-    <div class="sidebar-foot"><i></i> ALL SYSTEMS NOMINAL</div>
+  <div class="map-hud">
+    <div class="hud-card coordinates"><small>SECTOR POSITION</small><b id="coords">X 0000 · Y 0000</b><small>ZOOM <span id="zoom-label">1.00×</span></small></div>
+    <div class="hud-card map-legend"><span><i class="legend-dot discovered"></i> DISCOVERED</span><span><i class="legend-dot hidden"></i> UNDISCOVERED</span><span><i class="legend-dot tower"></i> SERVER TOWER</span></div>
+    <div class="zoom-controls"><button id="zoom-in">＋</button><button id="zoom-out">−</button><button id="recenter">⌖</button></div>
+  </div>
+  <div class="search-dock"><span>⌕</span><input id="map-search" placeholder="Find a family / server name..." autocomplete="off"><button id="search-btn">LOCATE</button><div id="search-results"></div></div>
+  <div class="bottom-hud"><span><i class="pulse"></i> DRAG TO EXPLORE</span><span>SCROLL TO ZOOM</span><span>CLICK A NODE TO INSPECT</span></div>
+  <aside id="profile" class="panel hidden">
+    <button class="close" data-close="profile">×</button><div id="profile-banner" class="profile-banner"></div>
+    <div class="profile-content"><div class="profile-heading"><img id="profile-avatar" class="avatar" alt=""><div><small id="profile-type">DISCOVERED FAMILY</small><h2 id="profile-name">Family name</h2><div id="profile-title" class="profile-title"></div></div><img id="profile-badge" class="badge" alt=""></div>
+    <p id="profile-lore" class="lore"></p><div class="stats" id="profile-stats"></div><div class="profile-meta" id="profile-meta"></div>
+    <div class="private-note" id="private-note"></div></div>
   </aside>
-  <main class="main">
-    <section class="heading">
-      <div><div class="eyebrow">LIVE TOPOLOGY&nbsp; · &nbsp;GLOBAL VIEW</div><h1>THE FAMILY <span>NETWORK</span></h1><p>Explore known lineages, distant signals, and active server infrastructure.</p></div>
-      <div class="map-controls"><button id="zoomOut" class="icon-btn">−</button><span id="zoomValue">100%</span><button id="zoomIn" class="icon-btn">+</button><button id="resetView" class="icon-btn">⌖</button></div>
-    </section>
-    <section class="map-shell" id="mapShell">
-      <div class="map-grid"></div><div class="sector-tag">SECTOR 07-A&nbsp; · &nbsp;COORDINATES UNLOCKED</div>
-      <div class="map-hint">DRAG TO PAN · SCROLL TO ZOOM · SELECT A SIGNAL</div>
-      <svg id="network" viewBox="0 0 1600 900" role="img" aria-label="Interactive family network map">
-        <defs>
-          <filter id="glow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-          <filter id="softGlow"><feGaussianBlur stdDeviation="8"/></filter>
-        </defs>
-        <g id="mapTransform"></g>
-      </svg>
-      <div class="map-vignette"></div>
-    </section>
-    <section class="tower-view hidden" id="towerView">
-      <div class="tower-heading"><div><div class="eyebrow">INFRASTRUCTURE MONITORING</div><h2>SERVER <span>TOWERS</span></h2><p>Five relay structures · live simulated telemetry</p></div><div class="live-pill"><i></i> LIVE FEED</div></div>
-      <div class="tower-grid" id="towerGrid"></div>
-    </section>
-  </main>
-
-  <div class="welcome-overlay" id="welcome">
-    <div class="welcome-card">
-      <div class="welcome-symbol">✳</div><div class="eyebrow">FAMILYATLAS // IDENTIFICATION PROTOCOL</div>
-      <h2>WHERE ARE YOU<br><span>FROM?</span></h2>
-      <p>Enter your family or dot username to locate your signal in the network.</p>
-      <form id="welcomeForm"><input id="welcomeSearch" autocomplete="off" placeholder="Enter family username..." required><button>LOCATE SIGNAL <span>↗</span></button></form>
-      <button class="explore-link" id="exploreAll">OR EXPLORE THE NETWORK <span>→</span></button>
-      <div class="welcome-foot"><i></i> PUBLIC ARCHIVE · PRIVATE RECORDS PROTECTED</div>
+  <aside id="tower" class="panel tower-panel hidden">
+    <button class="close" data-close="tower">×</button><div class="tower-head"><span class="tower-glyph">⌁</span><div><small>REMOTE INFRASTRUCTURE</small><h2>SERVER TOWER</h2><b id="tower-id">servertower.8930#</b></div></div>
+    <div class="tower-state"><span class="pulse"></span><b id="tower-status">ON ACTIVE</b><span id="tower-updated">LIVE TELEMETRY</span></div>
+    <div class="heat-wrap"><div class="heat-label"><span>THERMAL LOAD</span><b id="heat-value">67%</b></div><div class="heat-track"><i id="heat-bar"></i></div><svg id="spike-chart" viewBox="0 0 500 100" preserveAspectRatio="none"></svg></div>
+    <div class="stats" id="tower-stats"></div><p class="tower-log" id="tower-log">Listening for incoming connections...</p>
+  </aside>
+  <div id="alert" class="alert hidden"><div class="alert-kicker"><i class="pulse"></i> CROSS-FAMILY INCIDENT DETECTED</div><h2>CONGREGATION<br><em>ALERT!</em></h2><p id="alert-copy">Two families are fighting down at...</p><div class="alert-actions"><button id="alert-yes">VIEW INCIDENT ↗</button><button id="alert-no">DISMISS</button></div></div>
+  <div id="warbar" class="warbar hidden"><div><b>⚠ ACTIVE RAID EVENT</b><span id="war-caption">Two families in conflict</span></div><button id="exit-war">EXIT INCIDENT ×</button></div>
+  <div id="welcome" class="welcome">
+    <div class="welcome-grid"></div><div class="welcome-content"><div class="eyebrow"><i class="pulse"></i> UNKNOWN SPACE // CONNECTION REQUIRED</div><div class="welcome-symbol">✳</div><h1>WHERE IS YOUR<br><span>FAMILY FROM?</span></h1><p>Enter a known family or server name to trace its position across the network.</p>
+      <div class="welcome-search"><input id="origin-input" placeholder="Enter family username..." autocomplete="off"><button id="enter-map">ENTER MAP <span>↗</span></button></div><div id="origin-error"></div>
+      <div class="welcome-foot"><span>90,000,000 NODE FIELD</span><span>10 KNOWN FAMILIES</span><span>5 REMOTE TOWERS</span></div>
     </div>
   </div>
-
-  <div class="modal-backdrop hidden" id="profileBackdrop">
-    <article class="profile-panel" id="profilePanel">
-      <button class="close-btn" id="closeProfile">✕</button>
-      <div class="profile-banner" id="profileBanner"><div class="banner-shade"></div><div class="profile-badge-bg" id="profileBadgeBg"></div><div class="profile-topline"><span id="profileType">FAMILY RECORD</span><span id="profileDistance">— DAYS AWAY</span></div></div>
-      <div class="profile-content">
-        <div class="profile-title-row"><div class="profile-avatar" id="profileAvatar">✳</div><div class="profile-name-wrap"><h2 id="profileName">Family</h2><div class="profile-subtitle" id="profileSubtitle">KNOWN SIGNAL</div></div><span class="record-badge" id="recordBadge">DISCOVERED</span></div>
-        <p class="profile-description" id="profileDescription"></p>
-        <div class="profile-stats" id="profileStats"></div>
-        <div class="profile-section"><div class="section-title">ARCHIVE LORE <span>01 / RECORD</span></div><p id="profileLore"></p></div>
-        <div class="profile-section"><div class="section-title">SIGNAL DETAILS <span>02 / TELEMETRY</span></div><div class="detail-grid" id="profileDetails"></div></div>
-        <div class="profile-private hidden" id="privateMessage"><span>◈</span><div><b>UNDISCOVERED FAMILY</b><p>The family you're viewing wasn't discovered by your family. Members, elevations and lore are classified. Only the distance signal is available.</p></div></div>
-        <div class="profile-actions"><button id="focusProfile">FOCUS SIGNAL ↗</button><button class="secondary" id="closeProfile2">CLOSE RECORD</button></div>
-      </div>
-    </article>
-  </div>
-
-  <div class="alert-toast hidden" id="alertToast">
-    <div class="alert-top"><span><i></i> CONGREGATION ALERT!</span><button id="dismissAlert">✕</button></div>
-    <h3 id="alertTitle">TWO FAMILIES ARE FIGHTING</h3><p id="alertText">Unusual activity detected in a distant region.</p>
-    <div class="alert-actions"><button id="viewAlert">VIEW EVENT ↗</button><button class="secondary" id="ignoreAlert">DISMISS</button></div>
-  </div>
-  <div class="event-overlay hidden" id="eventOverlay">
-    <div class="event-panel"><button class="close-btn" id="closeEvent">✕</button><div class="eyebrow"><i class="pulse"></i> LIVE CONGREGATION EVENT</div><h2 id="eventName">REGIONAL CONFLICT</h2><p id="eventDescription"></p><div class="event-map" id="eventMap"></div><div class="event-status"><span>EVENT STATUS</span><b id="eventStatus">ACTIVE · SIMULATED</b></div><button class="event-jump" id="eventJump">JUMP TO REGION ↗</button></div>
-  </div>
-  <div class="toast" id="toast"></div>
-  <script type="module" src="app.js"></script>
-</body>
-</html>
+  <div id="toast" class="toast"></div>
+  <div id="help-panel" class="help-panel hidden"><button class="close" data-close="help-panel">×</button><h3>FIELD CONTROLS</h3><p><b>Drag</b> — move around the map</p><p><b>Mouse wheel</b> — zoom in and out</p><p><b>Click a dot</b> — inspect a family or its privacy status</p><p><b>Search</b> — travel to a known family and open its profile</p><p><b>ESC</b> — close panels / exit incident view</p><p class="muted">This is a local simulation. Tower telemetry, distances, and conflict events are generated for the experience.</p></div>
+</div>
+<script type="module" src="app.js"></script>
+</body></html>

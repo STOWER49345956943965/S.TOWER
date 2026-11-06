@@ -1,164 +1,91 @@
-import { dots } from "./Dots/index.js";
-import { towers } from "./Towers/index.js";
-
-const $ = id => document.getElementById(id);
-const svgNS = "http://www.w3.org/2000/svg";
-const mapGroup = $("mapTransform");
-let scale = 1, tx = 0, ty = 0, activeRecord = null, activeEvent = null;
-let dragging = false, dragStart = null;
-const discovered = dots.filter(d => d.discovered);
-$("statDiscovered").innerHTML = `${discovered.length}<span>/∞</span>`;
-$("statRegions").textContent = new Set(dots.map(d=>d.group)).size.toString().padStart(2,"0");
-
-function svg(tag, attrs={}, parent=mapGroup) {
-  const el=document.createElementNS(svgNS,tag);
-  Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
-  parent.appendChild(el); return el;
-}
-function seededEdges() {
-  const sorted=[...dots].sort((a,b)=>a.x-b.x);
-  for(let i=0;i<sorted.length-1;i++){
-    if(i%2===0 || Math.random()>.55){
-      const a=sorted[i],b=sorted[Math.min(sorted.length-1,i+1+Math.floor(Math.random()*4))];
-      svg("line",{x1:a.x,y1:a.y,x2:b.x,y2:b.y,class:"edge"});
-    }
+import * as D from './Dots/index.js';
+import towers from './Towers/towers.js';
+const dots=D.default; 
+const canvas=document.querySelector('#map'),ctx=canvas.getContext('2d');
+const $=s=>document.querySelector(s);
+let W=innerWidth,H=innerHeight,scale=.78,cam={x:0,y:0},drag=null,hover=null,incident=null,incidentTimer=null,toastTimer=null;
+let activeTower=null;
+const discovered=dots.filter(d=>d.discovered);
+const names=dots.map(d=>d.name.toLowerCase());
+const audio=new Audio('assets/Alert_sound.mp3');audio.volume=.65;
+function resize(){W=innerWidth;H=innerHeight;canvas.width=Math.floor(W*devicePixelRatio);canvas.height=Math.floor(H*devicePixelRatio);ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);draw()}
+addEventListener('resize',resize);
+function screen(x,y){return {x:W/2+(x-cam.x)*scale,y:H/2+(y-cam.y)*scale}}
+function world(x,y){return {x:(x-W/2)/scale+cam.x,y:(y-H/2)/scale+cam.y}}
+function hash(n){let x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)}
+const groups=[{name:'MID-DARK',x:2700,y:2200,color:'#7d8cff',days:9290},{name:'MID-OSCOR',x:-3200,y:1900,color:'#bd78ff',days:12480},{name:'THE OUTER VEIL',x:5200,y:-3500,color:'#62d9d5',days:18900},{name:'ASHEN EXPANSE',x:-5700,y:-4200,color:'#ff9875',days:24000},{name:'FAR-SIGNAL',x:8200,y:5500,color:'#f1d17a',days:38100}];
+const towersData=towers.map((t,i)=>({...t,x:[-350,780,-1250,1700,80][i],y:[-700,-950,850,1250,1500][i]}));
+function dotColor(i){let colors=['#53e8ff','#ff7d9c','#b18aff','#ffe17b','#68f0b5','#ff9e62','#7d9aff','#f38be7'];return colors[Math.floor(hash(i)*colors.length)]}
+function seededDots(wx,wy){ // deterministic, viewport-only procedural nodes; 90M virtual field
+ const chunk=620, minX=Math.floor(wx/chunk)-2,maxX=Math.floor((wx+W/scale)/chunk)+2,minY=Math.floor(wy/chunk)-2,maxY=Math.floor((wy+H/scale)/chunk)+2;
+ const out=[];
+ for(let cy=minY;cy<=maxY;cy++)for(let cx=minX;cx<=maxX;cx++){
+  const seed=(cx+9001)*92821+(cy+9001)*68917;
+  const n=34+Math.floor(hash(seed)*34);
+  for(let j=0;j<n;j++){let h=seed*101+j*7.13,x=cx*chunk+hash(h)*chunk,y=cy*chunk+hash(h+4)*chunk;
+   if(Math.abs(x)>12000||Math.abs(y)>12000)continue;
+   const clustered=hash(h+8)>.58;out.push({x,y,r:clustered?1.4+hash(h+9)*2.2:1+hash(h+9)*1.2,c:dotColor(seed+j),name:'Undiscovered',group:groups[Math.abs(Math.floor(hash(seed+1)*groups.length))]});
   }
-  for(let i=0;i<45;i++){
-    const x=70+Math.random()*1460,y=80+Math.random()*730;
-    const c=["#55dfff","#ff75c9","#9b8aff","#ffc45d","#5cf0bd"][i%5];
-    svg("circle",{cx:x,cy:y,r:1.6,fill:c,opacity:.8,filter:"url(#glow)"});
-  }
-  const groups=[...new Set(dots.map(d=>d.group))];
-  groups.forEach((g,i)=>{
-    const x=100+(i*239)%1300,y=130+(i*151)%620;
-    svg("path",{d:`M ${x} ${y+20} L ${x+100} ${y-30}`,class:"cluster-line"});
-    svg("text",{x:x+105,y:y-33,class:"cluster-label"}).textContent=g;
-  });
+ }
+ return out;
 }
-function openProfile(d) {
-  activeRecord=d;
-  $("profileName").textContent=d.title || d.name;
-  $("profileSubtitle").textContent=d.name;
-  $("profileType").textContent=d.discovered?"FAMILY RECORD":"UNCONFIRMED SIGNAL";
-  $("profileDistance").textContent=`${d.daysAway.toLocaleString()} DAYS AWAY`;
-  $("profileDescription").textContent=d.description;
-  $("profileLore").textContent=d.discovered?d.lore:"Classified record. No public lore is available.";
-  $("recordBadge").textContent=d.discovered?"DISCOVERED":"UNDISCOVERED";
-  $("recordBadge").style.color=d.discovered?"#57f1ca":"#ffcf80";
-  $("recordBadge").style.borderColor=d.discovered?"#2b8c86":"#8b6934";
-  $("profileBanner").style.backgroundImage=d.bannerUri?`linear-gradient(0deg,#081321aa,transparent),url("${d.bannerUri}")`:"";
-  $("profileBanner").style.backgroundColor=d.color+"22";
-  $("profileAvatar").style.backgroundImage=d.profileBackgroundUri?`url("${d.profileBackgroundUri}")`:(d.badgeUri?`url("${d.badgeUri}")`:"");
-  $("profileAvatar").textContent=(d.profileBackgroundUri||d.badgeUri)?"": "✳";
-  $("profileBadgeBg").style.backgroundImage=d.badgeBackgroundUri?`url("${d.badgeBackgroundUri}")`:"";
-  $("profileStats").innerHTML=d.discovered?[
-    ["MEMBERS",d.members.toLocaleString()],["ELEVATIONS",d.elevations.toLocaleString()],["CONNECTIONS",d.connections.toLocaleString()]
-  ].map(([a,b])=>`<div class="profile-stat"><b>${b}</b><small>${a}</small></div>`).join(""):"";
-  $("profileDetails").innerHTML=d.discovered?[
-    ["SIGNAL DISTANCE",`${d.daysAway.toLocaleString()} days`],["REGION",d.group],["STATUS",d.status],["DOT COLOR",d.color]
-  ].map(([a,b])=>`<div class="detail"><small>${a}</small><b>${b}</b></div>`).join(""):`<div class="detail"><small>SIGNAL DISTANCE</small><b>${d.daysAway.toLocaleString()} days away</b></div><div class="detail"><small>REGION</small><b>${d.group}</b></div>`;
-  $("privateMessage").classList.toggle("hidden",d.discovered);
-  $("profileStats").classList.toggle("hidden",!d.discovered);
-  $("profileLore").parentElement.classList.toggle("hidden",!d.discovered);
-  $("profileDetails").parentElement.classList.toggle("hidden",!d.discovered);
-  $("profileBackdrop").classList.remove("hidden");
+function draw(){if(!ctx)return;ctx.clearRect(0,0,W,H);
+ // distant stars
+ for(let i=0;i<180;i++){let x=(hash(i+11)*W),y=(hash(i+901)*H);ctx.fillStyle=`rgba(170,205,255,${.12+hash(i+50)*.35})`;ctx.fillRect(x,y,1,1)}
+ const view=world(0,0),field=seededDots(view.x,view.y);
+ // group haze + labels
+ for(const g of groups){let p=screen(g.x,g.y),r=Math.max(50,220*scale);let grad=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r);grad.addColorStop(0,g.color+'18');grad.addColorStop(1,g.color+'00');ctx.fillStyle=grad;ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
+ if(scale>.22){ctx.strokeStyle=g.color+'66';ctx.setLineDash([5,8]);ctx.beginPath();ctx.moveTo(p.x,p.y+15);ctx.lineTo(p.x,p.y+Math.max(30,80*scale));ctx.stroke();ctx.setLineDash([]);ctx.font=`700 ${Math.max(9,11*scale)}px monospace`;ctx.fillStyle=g.color;ctx.fillText(`${g.name}  ·  ${g.days.toLocaleString()} DAYS AWAY`,p.x-80,p.y+Math.max(45,100*scale));}}
+ // virtual dots
+ for(const d of field){let p=screen(d.x,d.y);if(p.x<-8||p.x>W+8||p.y<-8||p.y>H+8)continue;ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.7,d.r*scale),0,Math.PI*2);ctx.fillStyle=d.c;ctx.shadowBlur=scale>0.45?8:3;ctx.shadowColor=d.c;ctx.fill();ctx.shadowBlur=0;}
+ // known family nodes
+ for(const d of dots){let p=screen(d.x,d.y),r=Math.max(4,7*scale);ctx.beginPath();ctx.arc(p.x,p.y,r+7*scale,0,Math.PI*2);ctx.fillStyle=d.color+'22';ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=d.color;ctx.shadowBlur=24;ctx.shadowColor=d.color;ctx.fill();ctx.shadowBlur=0;
+ ctx.font=`700 ${Math.max(9,11*scale)}px monospace`;ctx.textAlign='center';ctx.fillStyle='#e7faff';ctx.fillText(d.name,p.x,p.y-13*scale);if(d.title&&scale>.48){ctx.font=`${Math.max(7,8*scale)}px monospace`;ctx.fillStyle=d.color;ctx.fillText(d.title,p.x,p.y+22*scale)}}
+ // tower nodes
+ for(const t of towersData){let p=screen(t.x,t.y),r=Math.max(7,10*scale);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(Math.PI/4);ctx.fillStyle='#ffac68';ctx.shadowColor='#ff8a4b';ctx.shadowBlur=20;ctx.fillRect(-r,-r,r*2,r*2);ctx.restore();ctx.shadowBlur=0;ctx.font=`${Math.max(8,9*scale)}px monospace`;ctx.textAlign='center';ctx.fillStyle='#ffc38a';ctx.fillText('TOWER',p.x,p.y-17*scale)}
+ // incident radius
+ if(incident){for(const d of incident.pair){let p=screen(d.x,d.y);ctx.beginPath();ctx.arc(p.x,p.y,100*scale,0,Math.PI*2);ctx.strokeStyle='#48a8ff';ctx.lineWidth=2;ctx.shadowBlur=25;ctx.shadowColor='#168dff';ctx.stroke();ctx.shadowBlur=0;ctx.beginPath();ctx.arc(p.x,p.y,75*scale,0,Math.PI*2);ctx.strokeStyle='#75caff66';ctx.setLineDash([4,8]);ctx.stroke();ctx.setLineDash([])}}
+ $('#coords').textContent=`X ${Math.round(cam.x).toString().padStart(4,'0')} · Y ${Math.round(cam.y).toString().padStart(4,'0')}`;$('#zoom-label').textContent=scale.toFixed(2)+'×';
 }
-function drawDots(){
-  dots.forEach((d,i)=>{
-    const g=svg("g",{class:"dot-node",transform:`translate(${d.x} ${d.y})`,tabindex:"0",role:"button","aria-label":d.discovered?d.title:"Undiscovered signal"});
-    svg("circle",{cx:0,cy:0,r:d.discovered?12:7,fill:d.color,class:"dot-halo",filter:"url(#softGlow)"},g);
-    svg("circle",{cx:0,cy:0,r:d.discovered?5.2:2.5,fill:d.color,class:"dot-core",filter:"url(#glow)"},g);
-    if(d.discovered){
-      svg("text",{x:0,y:21,"text-anchor":"middle",class:"dot-label"} ,g).textContent=d.title;
-      svg("text",{x:0,y:32,"text-anchor":"middle",class:"dot-distance"},g).textContent=`${d.daysAway.toLocaleString()} DAYS AWAY`;
-    }
-    g.addEventListener("click",e=>{e.stopPropagation();if(!d.discovered){toast("The family you're viewing wasn't discovered by your family.");return;}focusDot(d,true);});
-    g.addEventListener("keydown",e=>{if(e.key==="Enter"&&d.discovered)focusDot(d,true);});
-  });
-  towers.forEach(t=>{
-    const g=svg("g",{class:"tower-node",transform:`translate(${t.x} ${t.y})`});
-    svg("rect",{x:-8,y:-10,width:16,height:20,rx:1,style:`stroke:${t.color};filter:url(#glow)`},g);
-    svg("text",{x:0,y:5,"text-anchor":"middle"},g).textContent="▤";
-    svg("text",{x:0,y:25,"text-anchor":"middle",class:"dot-distance"},g).textContent=t.id.toUpperCase();
-    g.addEventListener("click",()=>showTower(t));
-  });
+function moveTo(x,y,targetScale=1.2){const start={...cam},ss=scale,st=performance.now(),dur=1100;function step(now){let t=Math.min(1,(now-st)/dur),e=1-Math.pow(1-t,4);cam.x=start.x+(x-start.x)*e;cam.y=start.y+(y-start.y)*e;scale=ss+(targetScale-ss)*e;draw();if(t<1)requestAnimationFrame(step);else if(targetScale>0.8){} }requestAnimationFrame(step)}
+function notify(s){let t=$('#toast');t.textContent=s;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500)}
+function openProfile(d){$('#tower').classList.add('hidden');$('#profile').classList.remove('hidden');$('#profile-name').textContent=d.name;$('#profile-title').textContent=d.title||'Uncharted node';$('#profile-type').textContent=d.discovered?'DISCOVERED FAMILY':'UNDISCOVERED FAMILY';
+ $('#profile-lore').textContent=d.discovered&&d.showLore?d.lore:'This family’s lore is private.';$('#profile-banner').style.backgroundImage=d.bannerUri?`url("${d.bannerUri}")`:`linear-gradient(120deg,${d.color},#121b44,#9d57c8)`;
+ $('#profile-badge').src=d.badgeUri||'';$('#profile-badge').style.visibility=d.badgeUri?'visible':'hidden';
+ $('#profile-avatar').src=d.profileUri||d.badgeUri||'';$('#profile-avatar').style.visibility=(d.profileUri||d.badgeUri)?'visible':'hidden';
+ if(d.backgroundUri)$('#profile').style.backgroundImage=`linear-gradient(#0a0d22df,#0a0d22f2),url("${d.backgroundUri}")`;else $('#profile').style.backgroundImage='';
+ const stat=(v,l)=>`<div class="stat"><b>${v}</b><small>${l}</small></div>`;
+ if(d.discovered){$('#profile-stats').innerHTML=stat(d.showMembers?d.members.toLocaleString():'PRIVATE','MEMBERS')+stat(d.showEliminations?d.eliminations:'PRIVATE','ELIMINATIONS')+stat(d.elevations,'ELEVATIONS');$('#private-note').textContent='PUBLIC ARCHIVE // Family information is available.'}
+ else{$('#profile-stats').innerHTML=stat('PRIVATE','MEMBERS')+stat('PRIVATE','ELIMINATIONS')+stat('PRIVATE','ELEVATIONS');$('#private-note').textContent='The family you’re viewing wasn’t discovered by your family. Members, eliminations, elevations and lore are private. Distance is public.'}
+ $('#profile-meta').textContent=`${d.daysAway.toLocaleString()} DAYS AWAY  ·  ${d.group||'UNMAPPED SECTOR'}  ·  NODE ${d.id.toUpperCase()}`;
 }
-function applyTransform(){mapGroup.setAttribute("transform",`translate(${tx} ${ty}) scale(${scale})`);$("zoomValue").textContent=Math.round(scale*100)+"%";}
-function focusDot(d,open){
-  const shell=$("mapShell"),w=shell.clientWidth,h=shell.clientHeight;
-  scale=Math.max(scale,1.35);tx=w/2-d.x*scale;ty=h/2-d.y*scale;applyTransform();
-  if(open)openProfile(d);
-}
-function toast(msg){$("toast").textContent=msg;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),2600);}
-function findDot(q){
-  const term=q.trim().toLowerCase();if(!term)return;
-  const match=dots.find(d=>d.name.toLowerCase()===term||d.title.toLowerCase()===term) || dots.find(d=>d.discovered&&(d.name.toLowerCase().includes(term)||d.title.toLowerCase().includes(term)));
-  if(!match){toast("No matching signal found in the archive.");return;}
-  $("welcome").classList.add("hidden");
-  if(!match.discovered){focusDot(match,false);toast("Signal located. This family has not been discovered.");return;}
-  focusDot(match,true);
-}
-$("welcomeForm").addEventListener("submit",e=>{e.preventDefault();findDot($("welcomeSearch").value);});
-$("exploreAll").addEventListener("click",()=>$("welcome").classList.add("hidden"));
-$("zoomIn").onclick=()=>{scale=Math.min(2.8,scale*1.18);applyTransform();};
-$("zoomOut").onclick=()=>{scale=Math.max(.55,scale/1.18);applyTransform();};
-$("resetView").onclick=()=>{scale=1;tx=0;ty=0;applyTransform();};
-$("network").addEventListener("pointerdown",e=>{if(e.target.closest(".dot-node,.tower-node"))return;dragging=true;dragStart={x:e.clientX-tx,y:e.clientY-ty};$("network").classList.add("dragging");$("network").setPointerCapture(e.pointerId);});
-$("network").addEventListener("pointermove",e=>{if(!dragging)return;tx=e.clientX-dragStart.x;ty=e.clientY-dragStart.y;applyTransform();});
-$("network").addEventListener("pointerup",()=>{dragging=false;$("network").classList.remove("dragging");});
-$("network").addEventListener("wheel",e=>{e.preventDefault();scale=Math.max(.55,Math.min(2.8,scale*(e.deltaY<0?1.08:.92)));applyTransform();},{passive:false});
-$("closeProfile").onclick=$("closeProfile2").onclick=()=>$("profileBackdrop").classList.add("hidden");
-$("profileBackdrop").addEventListener("click",e=>{if(e.target===$("profileBackdrop"))$("profileBackdrop").classList.add("hidden");});
-$("focusProfile").onclick=()=>{if(activeRecord){$("profileBackdrop").classList.add("hidden");focusDot(activeRecord,false);}};
-$("menuToggle").onclick=()=>$("sidebar").classList.toggle("open");
-document.querySelectorAll(".nav-item").forEach(btn=>btn.addEventListener("click",()=>{
-  document.querySelectorAll(".nav-item").forEach(b=>b.classList.remove("active"));btn.classList.add("active");
-  const towersOn=btn.dataset.view==="towers";$("towerView").classList.toggle("hidden",!towersOn);$("mapShell").classList.toggle("hidden",towersOn);$("heading").classList.toggle("hidden",towersOn);
-  $("sidebar").classList.remove("open");
-}));
-function showTower(t){
-  const fake={...t,heat:Math.max(12,Math.min(99,t.heat+Math.round(Math.random()*14-7))),connections:t.connections+Math.round(Math.random()*8-4)};
-  $("profileName").textContent=t.name;$("profileSubtitle").textContent=t.id+"#";$("profileType").textContent="SERVER TOWER TELEMETRY";$("profileDistance").textContent="LIVE INFRASTRUCTURE";
-  $("profileDescription").textContent="A relay tower monitoring active connections across the family network. Telemetry is simulated and periodically refreshes.";
-  $("profileBanner").style.backgroundImage="";$("profileBanner").style.backgroundColor=t.color+"22";$("profileAvatar").style.backgroundImage="";$("profileAvatar").textContent="▤";
-  $("profileStats").innerHTML=[["CONNECTIONS",fake.connections],["TOWER HEAT",fake.heat+"%"],["SIGNAL SPIKES",Math.floor(Math.random()*90+10)]].map(([a,b])=>`<div class="profile-stat"><b>${b}</b><small>${a}</small></div>`).join("");
-  $("profileStats").classList.remove("hidden");$("profileLore").parentElement.classList.add("hidden");$("profileDetails").parentElement.classList.add("hidden");$("privateMessage").classList.add("hidden");$("recordBadge").textContent="ON ACTIVE";$("recordBadge").style.color="#58efbd";
-  $("profileBackdrop").classList.remove("hidden");
-}
-function renderTowers(){
-  $("towerGrid").innerHTML=towers.map((t,i)=>`<div class="tower-card" style="--tower-color:${t.color}"><div class="tower-card-head"><h3>${t.id.toUpperCase()}#</h3><span class="tower-state">● ON ACTIVE</span></div><div class="tower-metrics"><div class="tower-metric"><small>CONNECTIONS</small><b id="tc${i}">${t.connections}</b></div><div class="tower-metric"><small>TOWER HEAT</small><b id="th${i}">${t.heat}%</b></div></div><svg class="sparkline" viewBox="0 0 250 70" preserveAspectRatio="none"><polyline id="sp${i}" points="${Array.from({length:25},(_,j)=>`${j*10},${20+Math.random()*45}`).join(" ")}" fill="none" stroke="${t.color}" stroke-width="2" filter="url(#glow)"/></svg><div class="tower-log" id="tl${i}"><div>telemetry stream initialized</div><div>relay handshake stable</div><div>monitoring active connections</div></div><button class="tower-open" data-tower="${i}">OPEN TOWER PROFILE ↗</button></div>`).join("");
-  document.querySelectorAll(".tower-open").forEach(b=>b.onclick=()=>showTower(towers[+b.dataset.tower]));
-}
-function updateTowers(){
-  towers.forEach((t,i)=>{
-    const heat=Math.max(5,Math.min(99,t.heat+Math.round(Math.random()*14-7)));
-    const connections=Math.max(1,t.connections+Math.round(Math.random()*6-3));
-    $("th"+i).textContent=heat+"%";$("tc"+i).textContent=connections;
-    $("sp"+i).setAttribute("points",Array.from({length:25},(_,j)=>`${j*10},${12+Math.random()*50}`).join(" "));
-    if(Math.random()<.15){$("tl"+i).innerHTML=`<div>tower updatinga...</div><div>rebuilding relay handshake</div><div>telemetry restored · ${new Date().toLocaleTimeString()}</div>`;}
-    else $("tl"+i).innerHTML=`<div>spike detected · ${Math.round(Math.random()*80+10)}ms</div><div>active connections: ${connections}</div><div>heat signature: ${heat}% · stable</div>`;
-  });
-}
-let pendingEvent=null;
-function triggerAlert(){
-  const a=discovered[Math.floor(Math.random()*discovered.length)],b=discovered.filter(d=>d.id!==a.id)[Math.floor(Math.random()*(discovered.length-1))];
-  const eventTypes=["A RAID ATTACK","A BOMB ATTACK","A SERVER BREACH","A REGIONAL ASSAULT"];
-  const type=eventTypes[Math.floor(Math.random()*eventTypes.length)];
-  pendingEvent={a,b,type};
-  $("alertTitle").textContent=`${a.title.toUpperCase()} VS ${b.title.toUpperCase()}`;
-  $("alertText").textContent=`${type} detected near ${a.group} · ${Math.min(a.daysAway,b.daysAway).toLocaleString()} DAYS AWAY. Reinforcement signals may be approaching.`;
-  $("alertToast").classList.remove("hidden");
-}
-function viewEvent(){
-  if(!pendingEvent)return;
-  const {a,b,type}=pendingEvent;activeEvent=pendingEvent;
-  $("eventName").textContent=type;$("eventDescription").textContent=`${a.title} and ${b.title} are involved in a simulated regional conflict. Blue raid perimeter is active. Nearby signals may converge to reinforce either family.`;
-  $("eventStatus").textContent="ACTIVE · SIMULATED";
-  $("eventOverlay").classList.remove("hidden");$("alertToast").classList.add("hidden");
-}
-$("viewAlert").onclick=viewEvent;$("ignoreAlert").onclick=$("dismissAlert").onclick=()=>$("alertToast").classList.add("hidden");
-$("closeEvent").onclick=()=>$("eventOverlay").classList.add("hidden");
-$("eventJump").onclick=()=>{if(activeEvent){$("eventOverlay").classList.add("hidden");focusDot(activeEvent.a,true);}};
-function clock(){ $("clock").textContent=new Date().toLocaleTimeString("en-US",{hour12:false});}
-seededEdges();drawDots();applyTransform();renderTowers();clock();setInterval(clock,1000);setInterval(updateTowers,3500);
-setTimeout(triggerAlert,18000);setInterval(()=>{if(Math.random()<.55 && $("alertToast").classList.contains("hidden") && $("eventOverlay").classList.contains("hidden"))triggerAlert();},55000);
+function openTower(t){$('#profile').classList.add('hidden');$('#tower').classList.remove('hidden');activeTower=t;$('#tower-id').textContent=t.serverId;updateTower()}
+function updateTower(){if(!activeTower)return;let heat=activeTower.baseHeat+Math.round(Math.random()*22-11),connections=activeTower.baseConnections+Math.round(Math.random()*70-35);heat=Math.max(5,Math.min(99,heat));$('#heat-value').textContent=heat+'%';$('#heat-bar').style.width=heat+'%';$('#tower-stats').innerHTML=`<div class="stat"><b>${Math.max(0,connections).toLocaleString()}</b><small>CONNECTIONS</small></div><div class="stat"><b>${Math.round(heat*1.3)}ms</b><small>LATENCY</small></div><div class="stat"><b>${Math.round(100-heat/5)}%</b><small>UPTIME</small></div>`;let reset=Math.random()<.1;$('#tower-status').textContent=reset?'TOWER UPDATINGA':(Math.random()<.2?'ON ACTIVE':'ACTIVE / STREAMING');$('#tower-log').textContent=reset?'Reinitializing relay stack... restoring encrypted channels...':`[${new Date().toLocaleTimeString()}] ${connections} active routes · packets flowing · ${heat}% thermal load`;let pts=[];for(let i=0;i<=50;i++){let x=i*10,y=80-Math.random()*Math.random()*75;pts.push(`${i?'L':'M'}${x},${y}`)}$('#spike-chart').innerHTML=`<path d="${pts.join(' ')}" fill="none" stroke="#ff9b65" stroke-width="2"/><path d="${pts.join(' ')} L500,100 L0,100 Z" fill="#ff875522"/>`}
+setInterval(()=>{if(activeTower&&!$('#tower').classList.contains('hidden'))updateTower()},2200);
+function locate(q,fromWelcome=false){q=q.trim().toLowerCase();if(!q)return;let d=dots.find(d=>d.name.toLowerCase()===q||d.id.toLowerCase()===q);if(!d){if(fromWelcome)$('#origin-error').textContent='No discovered family matches that name. Try one of the known family names.';else notify('No discovered family found with that name.');return}
+ $('#welcome').classList.add('off');$('#origin-error').textContent='';moveTo(d.x,d.y,1.55);setTimeout(()=>openProfile(d),850)}
+$('#enter-map').onclick=()=>locate($('#origin-input').value,true);$('#origin-input').addEventListener('keydown',e=>{if(e.key==='Enter')locate(e.target.value,true)});
+$('#search-btn').onclick=()=>locate($('#map-search').value);$('#map-search').addEventListener('keydown',e=>{if(e.key==='Enter')locate(e.target.value)});
+$('#zoom-in').onclick=()=>{scale=Math.min(5,scale*1.25);draw()};$('#zoom-out').onclick=()=>{scale=Math.max(.12,scale/1.25);draw()};$('#recenter').onclick=()=>moveTo(0,0,.78);
+canvas.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,cx:cam.x,cy:cam.y,moved:false};canvas.setPointerCapture(e.pointerId);canvas.classList.add('dragging')});
+canvas.addEventListener('pointermove',e=>{if(drag){let dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;cam.x=drag.cx-dx/scale;cam.y=drag.cy-dy/scale;draw()}});
+canvas.addEventListener('pointerup',e=>{canvas.classList.remove('dragging');if(!drag)return;if(!drag.moved){let p=world(e.clientX,e.clientY),nearest=null,dist=Infinity;for(let d of dots){let dd=Math.hypot(d.x-p.x,d.y-p.y);if(dd<dist){dist=dd;nearest=d}}for(let t of towersData){let dd=Math.hypot(t.x-p.x,t.y-p.y);if(dd<dist){dist=dd;nearest=t}}
+ if(dist<Math.max(32,25/scale)){if(nearest.serverId)openTower(nearest);else openProfile(nearest)}
+ else {
+   // A procedural node is still a real map target, but its identity and records remain undiscovered.
+   let candidates=seededDots(p.x-120,p.y-120),pick=null,pickDist=Infinity;
+   for(const d of candidates){let dd=Math.hypot(d.x-p.x,d.y-p.y);if(dd<pickDist){pickDist=dd;pick=d}}
+   if(pick&&pickDist<Math.max(55,35/scale)){
+     const g=pick.group;openProfile({id:'unmapped-node',name:'Undiscovered',title:'Uncharted family signal',lore:'',color:pick.c,x:pick.x,y:pick.y,discovered:false,daysAway:g.days,members:0,eliminations:0,elevations:0,group:g.name,badgeUri:'',bannerUri:'',profileUri:'',backgroundUri:'',showMembers:false,showEliminations:false,showLore:false});
+   } else {$('#profile').classList.add('hidden');$('#tower').classList.add('hidden')}
+ }}drag=null});
+canvas.addEventListener('wheel',e=>{e.preventDefault();let before=world(e.clientX,e.clientY);scale=Math.max(.12,Math.min(5,scale*Math.exp(-e.deltaY*.001)));let after=world(e.clientX,e.clientY);cam.x+=before.x-after.x;cam.y+=before.y-after.y;draw()},{passive:false});
+document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.add('hidden'));
+$('#help').onclick=()=>$('#help-panel').classList.toggle('hidden');
+function startIncident(){if(incident)return;let pair=[dots[1+Math.floor(Math.random()*(dots.length-1))],dots[1+Math.floor(Math.random()*(dots.length-1))]];if(pair[0]===pair[1])pair[1]=dots[2];incident={pair};$('#alert-copy').textContent=`${pair[0].name} and ${pair[1].name} are fighting down at ${Math.abs(pair[0].daysAway-pair[1].daysAway).toLocaleString()} DAYS away. A raid signal has been detected. Would you like to see?` ;$('#alert').classList.remove('hidden');try{audio.currentTime=0;audio.play().catch(()=>{})}catch{}}
+$('#alert-yes').onclick=()=>{if(!incident)return;$('#alert').classList.add('hidden');$('#warbar').classList.remove('hidden');$('#war-caption').textContent=`${incident.pair[0].name} × ${incident.pair[1].name} · RAID IN PROGRESS`;let x=(incident.pair[0].x+incident.pair[1].x)/2,y=(incident.pair[0].y+incident.pair[1].y)/2;moveTo(x,y,.72);draw()};
+function endIncident(){$('#alert').classList.add('hidden');$('#warbar').classList.add('hidden');incident=null;draw();notify('Incident view closed.')}
+$('#alert-no').onclick=endIncident;$('#exit-war').onclick=endIncident;$('#alert-now').onclick=startIncident;
+setInterval(()=>{if(!incident&&Math.random()<.22)startIncident()},26000);
+addEventListener('keydown',e=>{if(e.key==='Escape'){endIncident();$('#profile').classList.add('hidden');$('#tower').classList.add('hidden');$('#help-panel').classList.add('hidden')}});
+resize();draw();
