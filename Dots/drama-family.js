@@ -2,7 +2,7 @@
 export default {
   "id": "drama-family",
   "name": "DRAMA FAMILY",
-  "title": "Keepers of the Quiet",
+  "title": "D-F // DRAMA FAMILY - S 356",
   "lore": "A distant But heavily earned server that is heavily know for its people and what it brings",
   "color": "#797186",
   "x": -520,
