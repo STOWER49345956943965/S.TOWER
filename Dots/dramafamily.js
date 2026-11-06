@@ -2,7 +2,7 @@
 export default {
   "id": "dramafamily",
   "name": "DRAMA FAMILY",
-  "title": "D-F // DRAMA FAMILY - S 356",
+  "title": "D-F // DRAMA FAMILY - SE 356",
   "lore": "A distant But heavily earned server that is heavily know for its people and what it brings",
   "color": "#797186",
   "x": -520,
