@@ -1,7 +1,7 @@
 // Edit this file to customize this family node.
 export default {
   "id": "dramafamily",
-  "name": "DRAMAFAMILY",
+  "name": "DRAMA FAMILY",
   "title": "D-F // DRAMA FAMILY - S 356",
   "lore": "A distant But heavily earned server that is heavily know for its people and what it brings",
   "color": "#797186",
