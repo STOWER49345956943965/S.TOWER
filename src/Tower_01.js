@@ -1,1 +1,0 @@
-export default { id:'tower-01', label:'sevrertower.8930#', x:.57, y:.48, seed:8930 };
