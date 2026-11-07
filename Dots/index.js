@@ -8,6 +8,4 @@ import cinder from './cinder.js';
 import puff from './puff.js';
 import monolith from './monolith.js';
 import revenge from './revenge.js';
-import redship from './redship.js';
-import whiteship from './whiteship.js';
-export default [origin,ember,dramafamily,Hazel,tidal,midnight,cinder,puff,monolith,revenge,redship,whiteship];
+export default [origin,ember,dramafamily,Hazel,tidal,midnight,cinder,puff,monolith,revenge];

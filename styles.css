@@ -13,58 +13,14 @@
 .hidden{display:none!important}
 @media(max-width:700px){.topbar{height:62px;padding:0 12px}.brand b{font-size:15px}.brand small{font-size:7px}.telemetry{display:none}.quiet{padding:8px;font-size:8px}.map-hud{top:75px;left:10px;right:10px}.map-legend{display:none}.search-dock{top:135px;width:calc(100vw - 24px)}.bottom-hud{font-size:7px;left:10px;right:10px}.panel{right:8px;top:auto;bottom:50px;transform:none;max-height:70vh}.panel[style]{transform:none}.welcome-foot{gap:8px;font-size:7px}.welcome-search{flex-direction:column}.welcome-search input{padding:13px}.warbar{top:70px;width:calc(100% - 20px);justify-content:space-between;gap:5px}.warbar span{display:block}.alert h2{font-size:50px}}
 
-/* Ship nodes: cinematic vessel presentation */
-.ship-profile{
-  border-color:#b7dfff;
-  box-shadow:0 0 28px #71cfff55,0 0 90px #6a8cff30,0 25px 90px #000d;
-  background-color:#090e20;
-}
-.ship-profile .profile-banner{
-  height:190px;
-  background-size:contain;
-  background-repeat:no-repeat;
-  background-color:#070b19;
-  border-bottom:1px solid #607ca8;
-}
-.ship-profile .profile-banner:before{
-  content:"VESSEL SIGNAL // AUTHENTICATED";
-  position:absolute;z-index:1;left:14px;top:13px;
-  padding:7px 10px;background:#071329d9;border:1px solid #83dfff88;
-  color:#bcefff;font:700 8px monospace;letter-spacing:1.5px;
-  box-shadow:0 0 18px #42bfff44;
-}
-.ship-profile .profile-banner:after{
-  background:linear-gradient(0deg,#080d20 0%,transparent 35%,#07132922 100%);
-}
-.ship-profile .profile-heading{align-items:center;margin-top:-20px;gap:16px}
-.ship-profile .avatar{
-  width:76px;height:112px;flex:0 0 76px;object-fit:contain;
-  border-radius:8px;border:1px solid #c8eaff;
-  background:linear-gradient(145deg,#182a49,#070b19);
-  box-shadow:0 0 24px #67cfff88;padding:3px;
-}
-.ship-profile .profile-heading h2{
-  font-size:clamp(22px,5vw,32px);line-height:.98;
-  text-shadow:0 0 18px #6dcfff66;
-}
-.ship-profile .badge{border-radius:7px}
-.ship-profile .lore{
-  padding:14px 15px;margin:16px 0;
-  background:linear-gradient(110deg,#14233bd9,#10152be8);
-  border-left:2px solid #8cdbff;
-  box-shadow:inset 0 0 24px #4e9bff12;
-}
-.ship-profile .stat{
-  background:linear-gradient(145deg,#172541,#0b1124);
-  border-color:#496487;
-}
-.ship-profile .stat b{color:#b6edff;text-shadow:0 0 12px #6bcaff77}
-.ship-profile .private-note{
-  border-left-color:#b5dfff;background:#111d34;
-}
-.ship-profile #profile-meta{letter-spacing:1px;color:#9bb8d6}
-@media(max-width:700px){
- .ship-profile .profile-banner{height:150px}
- .ship-profile .profile-heading{gap:10px}
- .ship-profile .avatar{width:62px;height:92px;flex-basis:62px}
-}
+/* Vessel dossier: a more cinematic, high-contrast ship inspection surface. */
+.profile.ship-mode{width:min(470px,calc(100vw - 28px));border-color:#9defff;box-shadow:0 0 22px #69dfff44,0 0 90px #287cff44,0 25px 90px #000d;background:linear-gradient(155deg,#101b32f5,#070b1cf7 68%)}
+.ship-mode .profile-banner{height:210px;background-size:contain!important;background-repeat:no-repeat;background-color:#080d1d;background-position:center!important;border-bottom:1px solid #b4eaff55}
+.ship-mode .profile-banner:after{background:linear-gradient(0deg,#0a0d22,transparent 68%)}
+.ship-mode .avatar{width:76px;height:76px;border-radius:10px;object-fit:contain;background:#091225;border-color:#b9f4ff;box-shadow:0 0 26px #65dfff77}
+.ship-mode .profile-heading{margin-top:-38px;gap:15px}
+.ship-mode .profile-heading h2{font-size:29px;letter-spacing:1.4px;text-shadow:0 0 20px #9ceaff55}
+.ship-mode .profile-heading small{color:#a9f2ff}
+.ship-mode .stat{background:linear-gradient(145deg,#182844,#0d1428);border-color:#466080;box-shadow:inset 0 0 18px #8edfff0a}
+.ship-mode .stat b{color:#b7f4ff;font-size:19px}
+.ship-mode .private-note{border-left-color:#83eaff;background:linear-gradient(90deg,#17304a,#10182e);color:#d2eaff}

@@ -21,7 +21,7 @@
     <div class="zoom-controls"><button id="zoom-in">＋</button><button id="zoom-out">−</button><button id="recenter">⌖</button></div>
   </div>
   <div class="search-dock"><span>⌕</span><input id="map-search" placeholder="Find a family / server name..." autocomplete="off"><button id="search-btn">LOCATE</button><div id="search-results"></div></div>
-  <div class="bottom-hud"><span><i class="pulse"></i> DRAG TO EXPLORE</span><span>SCROLL TO ZOOM</span><span>CLICK A NODE TO INSPECT</span></div>
+  <div class="bottom-hud"><span><i class="pulse"></i> DRAG TO EXPLORE</span><span>SCROLL TO ZOOM</span><span>CLICK A DOT OR VESSEL TO INSPECT</span></div>
   <aside id="profile" class="panel hidden">
     <button class="close" data-close="profile">×</button><div id="profile-banner" class="profile-banner"></div>
     <div class="profile-content"><div class="profile-heading"><img id="profile-avatar" class="avatar" alt=""><div><small id="profile-type">DISCOVERED FAMILY</small><h2 id="profile-name">Family name</h2><div id="profile-title" class="profile-title"></div></div><img id="profile-badge" class="badge" alt=""></div>
@@ -34,12 +34,12 @@
     <div class="heat-wrap"><div class="heat-label"><span>THERMAL LOAD</span><b id="heat-value">67%</b></div><div class="heat-track"><i id="heat-bar"></i></div><svg id="spike-chart" viewBox="0 0 500 100" preserveAspectRatio="none"></svg></div>
     <div class="stats" id="tower-stats"></div><p class="tower-log" id="tower-log">Listening for incoming connections...</p>
   </aside>
-  <div id="alert" class="alert hidden"><div class="alert-kicker"><i class="pulse"></i> CROSS-SIGNAL INCIDENT DETECTED</div><h2>CONGREGATION<br><em>ALERT!</em></h2><p id="alert-copy">Two families are fighting down at...</p><div class="alert-actions"><button id="alert-yes">VIEW INCIDENT ↗</button><button id="alert-no">DISMISS</button></div></div>
+  <div id="alert" class="alert hidden"><div class="alert-kicker"><i class="pulse"></i> CROSS-FAMILY INCIDENT DETECTED</div><h2>CONGREGATION<br><em>ALERT!</em></h2><p id="alert-copy">Two families are fighting down at...</p><div class="alert-actions"><button id="alert-yes">VIEW INCIDENT ↗</button><button id="alert-no">DISMISS</button></div></div>
   <div id="warbar" class="warbar hidden"><div><b>⚠ ACTIVE RAID EVENT</b><span id="war-caption">Two families in conflict</span></div><button id="exit-war">EXIT INCIDENT ×</button></div>
   <div id="welcome" class="welcome">
     <div class="welcome-grid"></div><div class="welcome-content"><div class="eyebrow"><i class="pulse"></i> UNKNOWN SPACE // CONNECTION REQUIRED</div><div class="welcome-symbol">✳</div><h1>WELCOME TO<br><span>S.TOWER</span></h1><p>Enter a known family or server name to trace its position across the network.</p>
       <div class="welcome-search"><input id="origin-input" placeholder="Enter family username..." autocomplete="off"><button id="enter-map">ENTER MAP <span>↗</span></button></div><div id="origin-error"></div>
-      <div class="welcome-foot"><span>90,000,000 NODE FIELD</span><span>11 KNOWN SIGNALS</span><span>5 REMOTE TOWERS</span></div>
+      <div class="welcome-foot"><span>90,000,000 NODE FIELD</span><span>10 KNOWN FAMILIES</span><span>5 REMOTE TOWERS</span></div>
     </div>
   </div>
   <div id="toast" class="toast"></div>
