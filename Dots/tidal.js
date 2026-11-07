@@ -3,7 +3,7 @@ export default {
   "id": "tidal",
   "name": "Tidal Bloom",
   "title": "The Deep Current",
-  "lore": "A drifting family cluster surrounded by smaller satellite signals.",
+  "lore": "A revengeing family cluster surrounded by smaller satellite signals.",
   "color": "#58e7bd",
   "x": -740,
   "y": 250,
