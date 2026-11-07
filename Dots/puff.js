@@ -14,7 +14,7 @@ export default {
   "elevations": 1000,
   "badgeUri": "assets/uLAimaYg.png",
   "bannerUri": "assets/PUFFTHATSOUPBANNER.png",
-  "profileUri": "PUFFTHATSOUP.webp",
+  "profileUri": "assets/PUFFTHATSOUP.webp",
   "backgroundUri": "PUFFTHATSOUPBANNER.png",
   "showMembers": true,
   "showEliminations": true,
