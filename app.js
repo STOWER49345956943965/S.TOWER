@@ -87,30 +87,53 @@ function openProfile(d){$('#tower').classList.add('hidden');$('#profile').classL
 function openTower(t){$('#profile').classList.add('hidden');$('#tower').classList.remove('hidden');activeTower=t;$('#tower-id').textContent=t.serverId;updateTower()}
 function updateTower(){if(!activeTower)return;let heat=activeTower.baseHeat+Math.round(Math.random()*22-11),connections=activeTower.baseConnections+Math.round(Math.random()*70-35);heat=Math.max(5,Math.min(99,heat));$('#heat-value').textContent=heat+'%';$('#heat-bar').style.width=heat+'%';$('#tower-stats').innerHTML=`<div class="stat"><b>${Math.max(0,connections).toLocaleString()}</b><small>CONNECTIONS</small></div><div class="stat"><b>${Math.round(heat*1.3)}ms</b><small>LATENCY</small></div><div class="stat"><b>${Math.round(100-heat/5)}%</b><small>UPTIME</small></div>`;let reset=Math.random()<.1;$('#tower-status').textContent=reset?'TOWER UPDATINGA':(Math.random()<.2?'ON ACTIVE':'ACTIVE / STREAMING');$('#tower-log').textContent=reset?'Reinitializing relay stack... restoring encrypted channels...':`[${new Date().toLocaleTimeString()}] ${connections} active routes · packets flowing · ${heat}% thermal load`;let pts=[];for(let i=0;i<=50;i++){let x=i*10,y=80-Math.random()*Math.random()*75;pts.push(`${i?'L':'M'}${x},${y}`)}$('#spike-chart').innerHTML=`<path d="${pts.join(' ')}" fill="none" stroke="#ff9b65" stroke-width="2"/><path d="${pts.join(' ')} L500,100 L0,100 Z" fill="#ff875522"/>`}
 setInterval(()=>{if(activeTower&&!$('#tower').classList.contains('hidden'))updateTower()},2200);
+function searchNormalize(value){
+ // Normalize punctuation, spaces, accents and common Unicode presentation forms.
+ return String(value??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/^@/,'').replace(/[^a-z0-9]/g,'');
+}
 function locate(raw,fromWelcome=false){
- const q=String(raw||'').trim().toLowerCase().replace(/^@/,'');
- if(!q){if(fromWelcome)$('#origin-error').textContent='Enter a family name first.';else notify('Enter a family name first.');return}
- const normalize=v=>String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');
- const nq=normalize(q);
- // Accept the displayed family name, its per-file ID, title, or a partial username.
- let matches=dots.filter(d=>[d.name,d.id,d.title].some(v=>normalize(v)===nq));
- if(!matches.length)matches=dots.filter(d=>[d.name,d.id,d.title].some(v=>normalize(v).includes(nq)));
+ const rawQuery=String(raw??'').trim();
+ const query=searchNormalize(rawQuery);
+ const error=$('#origin-error');
+ if(!query){if(fromWelcome&&error)error.textContent='Enter a family name first.';else notify('Enter a family name first.');return false;}
+ const fields=d=>[d.name,d.id,d.title,d.username,d.handle,...(Array.isArray(d.aliases)?d.aliases:[])].filter(Boolean);
+ // Exact name / ID / title first, then safe partial matching. IDs remain searchable even
+ // when a display name uses decorative Unicode lettering.
+ let matches=dots.filter(d=>fields(d).some(v=>searchNormalize(v)===query));
+ if(!matches.length)matches=dots.filter(d=>fields(d).some(v=>{
+   const value=searchNormalize(v);return value.length>=2&&(value.includes(query)||query.includes(value));
+ }));
+ // Match individual words too (e.g. "Drama" for "DRAMA FAMILY").
+ if(!matches.length){
+   const words=query.match(/[a-z0-9]{2,}/g)||[];
+   matches=dots.filter(d=>words.some(w=>fields(d).some(v=>searchNormalize(v).includes(w))));
+ }
  const d=matches[0];
  if(!d){
-   const msg='Family not found. Try: '+dots.map(x=>x.name).join(', ');
-   if(fromWelcome)$('#origin-error').textContent=msg;else notify('Family not found. Try a known family name.');
-   return;
+   const msg='No matching signal. Try a family name or ID: '+dots.slice(0,8).map(x=>x.id).join(', ');
+   if(fromWelcome&&error)error.textContent=msg;else notify('No matching signal. Try a family name or ID.');
+   return false;
  }
- // Dismiss the entry screen immediately, then animate the map to the selected node.
+ // Dismiss the entry screen synchronously so a successful search never leaves the user
+ // trapped at the welcome menu while the camera animation is running.
  $('#welcome').classList.add('off');
- $('#origin-error').textContent='';
+ if(error)error.textContent='';
  $('#profile').classList.add('hidden');$('#tower').classList.add('hidden');
- $('#map-search').value='';
- moveTo(d.x,d.y,1.55);
- window.setTimeout(()=>{openProfile(d);draw();},1200);
+ const input=$('#map-search');if(input)input.value='';
+ const x=Number.isFinite(Number(d.x))?Number(d.x):0;
+ const y=Number.isFinite(Number(d.y))?Number(d.y):0;
+ moveTo(x,y,1.55);
+ window.setTimeout(()=>{openProfile(d);draw();},1150);
+ return true;
 }
-$('#enter-map').onclick=()=>locate($('#origin-input').value,true);$('#origin-input').addEventListener('keydown',e=>{if(e.key==='Enter')locate(e.target.value,true)});
-$('#search-btn').onclick=()=>locate($('#map-search').value);$('#map-search').addEventListener('keydown',e=>{if(e.key==='Enter')locate(e.target.value)});
+const enterButton=$('#enter-map');
+if(enterButton)enterButton.addEventListener('click',e=>{e.preventDefault();locate($('#origin-input')?.value,true);});
+const originInput=$('#origin-input');
+if(originInput)originInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();locate(e.currentTarget.value,true);}});
+const searchButton=$('#search-btn');
+if(searchButton)searchButton.addEventListener('click',e=>{e.preventDefault();locate($('#map-search')?.value,false);});
+const mapSearch=$('#map-search');
+if(mapSearch)mapSearch.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();locate(e.currentTarget.value,false);}});
 $('#zoom-in').onclick=()=>{scale=Math.min(5,scale*1.25);draw()};$('#zoom-out').onclick=()=>{scale=Math.max(.12,scale/1.25);draw()};$('#recenter').onclick=()=>moveTo(0,0,.78);
 canvas.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,cx:cam.x,cy:cam.y,moved:false};canvas.setPointerCapture(e.pointerId);canvas.classList.add('dragging')});
 canvas.addEventListener('pointermove',e=>{if(drag){let dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;cam.x=drag.cx-dx/scale;cam.y=drag.cy-dy/scale;draw()}});

@@ -1,4 +1,4 @@
-// Discovered red-lit ship node. Customize its identity and profile here.
+/// Discovered red-lit ship node. Customize its identity and profile here.
 export default {
   id: "redship",
   name: "ᴅᴇsᴇʀᴠᴇ",
