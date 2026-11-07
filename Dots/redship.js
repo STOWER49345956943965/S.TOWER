@@ -1,0 +1,25 @@
+// Discovered red-lit ship node. Customize its identity and profile here.
+export default {
+  id: "redship",
+  name: "ᴅᴇsᴇʀᴠᴇ",
+  title: "Ship Name:Vanguardian long shed",
+  lore: "A heavily marked vessel moving through the mapped sectors. Its red signal is recognized by the network, and its systems respond aggressively when a Congregation Alert begins.",
+  color: "#ff465d",
+  x: 1150,
+  y: -420,
+  discovered: true,
+  daysAway: 618,
+  members: 84,
+  eliminations: 29,
+  elevations: 6,
+  badgeUri: "",
+  bannerUri: "assets/snow-falling-gif.gif",
+  profileUri: "assets/images.jpg",
+  backgroundUri: "assets/snow-falling-gif.gif",
+  showMembers: true,
+  showEliminations: true,
+  showLore: false,
+  group: "SHIP-X/D.F",
+  ship: true,
+  shipImage: "assets/red-signal-ship.png"
+};

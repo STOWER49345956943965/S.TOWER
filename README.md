@@ -22,7 +22,7 @@ Every known family has its own file in `Dots/`. Edit its default export:
 
 Use relative paths such as `assets/my-banner.jpg` for images. Add the image file to the repository. `profileUri` controls the circular profile image, `badgeUri` controls the badge beside the name, `bannerUri` controls the banner, and `backgroundUri` adds a panel background. Put your image files in the repository and use their relative paths.
 
-To add another named family, create a new module in `Dots/`, import it in `Dots/index.js`, and add it to the exported array. The ten included modules are the ten discovered examples.
+To add another named family, create a new module in `Dots/`, import it in `Dots/index.js`, and add it to the exported array. The original family modules remain included; the discovered red vessel is an additional public node, and the white vessel is an additional locked node.
 
 ## Towers
 Edit the five entries in `Towers/towers.js`. Towers are independent of family nodes and show generated heat, connection counts, spike telemetry, and occasional simulated restart states.
@@ -38,3 +38,6 @@ This is a front-end simulation: generated telemetry, member counts, distance val
 
 ## Search names
 The welcome/search field accepts a family's displayed name, its file ID (for example `ember`), or its title. Matching ignores capitalization, spaces, punctuation, and an optional leading `@`.
+
+## Vessel nodes and movement
+Two vessel examples are included: `Dots/redship.js` (discovered) and `Dots/whiteship.js` (undiscovered). Their transparent PNG artwork lives in `assets/`. Edit each file to change its name, color, position, lore, and image. The red vessel participates in simulated Congregation Alert encounters; the white vessel remains locked while undiscovered. Known nodes drift smoothly, and matching-color escort particles orbit as small packs. During an alert, the two selected discovered nodes exchange animated beam fire. These are visual simulations, not network-connected combat.
