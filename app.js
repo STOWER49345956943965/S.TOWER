@@ -36,10 +36,11 @@ function shipPosition(ship){
    return {x,y,angle:progress===1?Math.atan2(travelY,travelX)+Math.PI/2:Math.atan2(y-previousY,x-previousX)+Math.PI/2};
   }
   const departure=elapsed-wingImpactAt;
-  const patrolRadius=360,heading=Math.atan2(travelY,travelX),startAngle=heading-Math.PI/2;
+  const patrolRadius=750,heading=Math.atan2(travelY,travelX),startAngle=heading-Math.PI/2;
   const centerX=endX-patrolRadius*Math.cos(startAngle),centerY=endY-patrolRadius*Math.sin(startAngle);
   const angle=startAngle+departure*Math.hypot(travelX,travelY)/(wingImpactAt*patrolRadius);
-  return {x:centerX+patrolRadius*Math.cos(angle),y:centerY+patrolRadius*Math.sin(angle),angle:angle+Math.PI};
+  const radius=patrolRadius+180*(1-Math.cos(departure*.00013));
+  return {x:centerX+radius*Math.cos(angle),y:centerY+radius*Math.sin(angle),angle:angle+Math.PI};
  }
  const phase=animationClock*.00055+(ship.discovered?1:3);
  const x=ship.x+Math.cos(phase)*42,y=ship.y+Math.sin(phase)*28;
@@ -111,7 +112,7 @@ function draw(){if(!ctx)return;ctx.clearRect(0,0,W,H);
  // virtual dots
  for(const d of field){let phase=animationClock*.00055+(d.x+d.y)*.001;let pack=hash(Math.floor(d.x/260)+Math.floor(d.y/260)*31),gather=1-Math.exp(-animationClock*.000018);let driftX=Math.sin(phase+pack*8)*4+Math.cos(phase*.63+pack*17)*2;let driftY=Math.cos(phase*.9+pack*11)*4+Math.sin(phase*.7+pack*23)*2;let pos=repelFromWing(d.x+(d.packX-d.x)*gather+driftX,d.y+(d.packY-d.y)*gather+driftY),p=screen(pos.x,pos.y);if(p.x<-8||p.x>W+8||p.y<-8||p.y>H+8)continue;ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.7,d.r*scale),0,Math.PI*2);ctx.fillStyle=d.c;ctx.shadowBlur=scale>0.45?8:3;ctx.shadowColor=d.c;ctx.fill();ctx.shadowBlur=0;}
  // active congregation: same-color signals drift into loose packs
- for(const d of dots){if(d===puffTarget&&wingAttack&&animationClock-wingAttack.startedAt>=wingImpactAt)continue;let p=screen(d.x,d.y),r=Math.max(4,7*scale);ctx.beginPath();ctx.arc(p.x,p.y,r+7*scale,0,Math.PI*2);ctx.fillStyle=d.color+'22';ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=d.color;ctx.shadowBlur=24;ctx.shadowColor=d.color;ctx.fill();ctx.shadowBlur=0;
+ for(const d of dots){if(d.disabled)continue;let p=screen(d.x,d.y),r=Math.max(4,7*scale);ctx.beginPath();ctx.arc(p.x,p.y,r+7*scale,0,Math.PI*2);ctx.fillStyle=d.color+'22';ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=d.color;ctx.shadowBlur=24;ctx.shadowColor=d.color;ctx.fill();ctx.shadowBlur=0;
  ctx.font=`700 ${Math.max(9,11*scale)}px monospace`;ctx.textAlign='center';ctx.fillStyle='#e7faff';ctx.fillText(d.name,p.x,p.y-13*scale);if(d.title&&scale>.48){ctx.font=`${Math.max(7,8*scale)}px monospace`;ctx.fillStyle=d.color;ctx.fillText(d.title,p.x,p.y+22*scale)}}
  // tower nodes
  for(const t of towersData){let p=screen(t.x,t.y),r=Math.max(7,10*scale);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(Math.PI/4);ctx.fillStyle='#ffac68';ctx.shadowColor='#ff8a4b';ctx.shadowBlur=20;ctx.fillRect(-r,-r,r*2,r*2);ctx.restore();ctx.shadowBlur=0;ctx.font=`${Math.max(8,9*scale)}px monospace`;ctx.textAlign='center';ctx.fillStyle='#ffc38a';ctx.fillText('TOWER',p.x,p.y-17*scale)}
@@ -156,8 +157,8 @@ function locate(raw,fromWelcome=false){
  const normalize=v=>String(v||'').toLowerCase().replace(/[^a-z0-9]/g,'');
  const nq=normalize(q);
  // Accept the displayed family name, its per-file ID, title, or a partial username.
- let matches=dots.filter(d=>[d.name,d.id,d.title].some(v=>normalize(v)===nq));
- if(!matches.length)matches=dots.filter(d=>[d.name,d.id,d.title].some(v=>normalize(v).includes(nq)));
+ let matches=dots.filter(d=>!d.disabled&&[d.name,d.id,d.title].some(v=>normalize(v)===nq));
+ if(!matches.length)matches=dots.filter(d=>!d.disabled&&[d.name,d.id,d.title].some(v=>normalize(v).includes(nq)));
  const d=matches[0];
  if(!d){
    const msg='Family not found. Try: '+dots.map(x=>x.name).join(', ');
@@ -177,7 +178,7 @@ $('#search-btn').onclick=()=>locate($('#map-search').value);$('#map-search').add
 $('#zoom-in').onclick=()=>{scale=Math.min(5,scale*1.25);draw()};$('#zoom-out').onclick=()=>{scale=Math.max(.12,scale/1.25);draw()};$('#recenter').onclick=()=>moveTo(0,0,.78);
 canvas.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,cx:cam.x,cy:cam.y,moved:false};canvas.setPointerCapture(e.pointerId);canvas.classList.add('dragging')});
 canvas.addEventListener('pointermove',e=>{if(drag){let dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)drag.moved=true;cam.x=drag.cx-dx/scale;cam.y=drag.cy-dy/scale;draw()}});
-canvas.addEventListener('pointerup',e=>{canvas.classList.remove('dragging');if(!drag)return;if(!drag.moved){let p=world(e.clientX,e.clientY),nearest=null,dist=Infinity;for(let d of dots){let dd=Math.hypot(d.x-p.x,d.y-p.y);if(dd<dist){dist=dd;nearest=d}}for(let sh of ships){let pos=shipPosition(sh),dd=Math.hypot(pos.x-p.x,pos.y-p.y);if(dd<dist){dist=dd;nearest=sh}}for(let t of towersData){let dd=Math.hypot(t.x-p.x,t.y-p.y);if(dd<dist){dist=dd;nearest=t}}
+canvas.addEventListener('pointerup',e=>{canvas.classList.remove('dragging');if(!drag)return;if(!drag.moved){let p=world(e.clientX,e.clientY),nearest=null,dist=Infinity;for(let d of dots){if(d.disabled)continue;let dd=Math.hypot(d.x-p.x,d.y-p.y);if(dd<dist){dist=dd;nearest=d}}for(let sh of ships){let pos=shipPosition(sh),dd=Math.hypot(pos.x-p.x,pos.y-p.y);if(dd<dist){dist=dd;nearest=sh}}for(let t of towersData){let dd=Math.hypot(t.x-p.x,t.y-p.y);if(dd<dist){dist=dd;nearest=t}}
  if(dist<Math.max(32,25/scale)){if(nearest.serverId)openTower(nearest);else if(nearest.id&&nearest.id.includes('-'))openShip(nearest);else openProfile(nearest)}
  else {
    // A procedural node is still a real map target, but its identity and records remain undiscovered.
@@ -202,6 +203,7 @@ function animate(ts){
  animationClock=ts;
  if(wingAttack&&!wingAttack.impacted&&ts-wingAttack.startedAt>=wingImpactAt){
   wingAttack.impacted=true;
+  puffTarget.disabled=true;
   $('#war-caption').textContent='PUFFTHATSOUP DESTROYED · WING-GGR.8290 PATROLLING';
  }
  draw();requestAnimationFrame(animate);

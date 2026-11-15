@@ -31,7 +31,7 @@ Edit the five entries in `Towers/towers.js`. Towers are independent of family no
 The app represents a 90,000,000-node virtual field. It procedurally generates stable, deterministic decorative nodes only for the visible map area. This avoids creating 90 million DOM/canvas objects at startup and keeps navigation responsive. The ten family profiles and five tower records are explicit editable data.
 
 ## WING-GGR.8290 encounter
-On page load, the map automatically follows WING-GGR.8290 as it attacks PUFFTHATSOUP. The target disappears in a brief explosion, and the ship continues moving past it. Random congregation alerts are currently disabled.
+On page load, the map automatically follows WING-GGR.8290 as it attacks PUFFTHATSOUP. The target disappears in a brief explosion and is disabled for map selection and search. The ship continues roaming the map on an autonomous patrol. Random congregation alerts are currently disabled.
 
 ## Important
 This is a front-end simulation: generated telemetry, member counts, distance values, battles, and tower activity are not live server data. A real community directory with authenticated private family information requires a backend, database, and access control. Do not put sensitive/private records in public JavaScript files.
