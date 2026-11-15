@@ -3,8 +3,9 @@ import towers from './Towers/towers.js';
 const dots=D.default; 
 const canvas=document.querySelector('#map'),ctx=canvas.getContext('2d');
 const $=s=>document.querySelector(s);
-let W=innerWidth,H=innerHeight,scale=.78,cam={x:0,y:0},drag=null,hover=null,incident=null,incidentTimer=null,toastTimer=null;
-let activeTower=null,activeShip=null,animationClock=0,beam=null,wingAttack=null,wingAlertPending=false;
+let W=innerWidth,H=innerHeight,scale=.78,cam={x:0,y:0},drag=null,hover=null,toastTimer=null;
+let activeTower=null,activeShip=null,animationClock=0,wingAttack=null;
+const wingImpactAt=6500,wingBlastDuration=1800;
 const shipImages={discovered:new Image(),unknown:new Image(),wing:new Image()};
 shipImages.discovered.src='assets/discovered-raider.png';shipImages.unknown.src='assets/unknown-ship.png';shipImages.wing.src='assets/WING-GGR.8290.png';
 const ships=[
@@ -15,7 +16,6 @@ const ships=[
 const puffTarget=dots.find(d=>d.id==='puff');
 const discovered=dots.filter(d=>d.discovered);
 const names=dots.map(d=>d.name.toLowerCase());
-const audio=new Audio('assets/Alert_sound.mp3');audio.volume=.65;
 function resize(){W=innerWidth;H=innerHeight;canvas.width=Math.floor(W*devicePixelRatio);canvas.height=Math.floor(H*devicePixelRatio);ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);draw()}
 addEventListener('resize',resize);
 function screen(x,y){return {x:W/2+(x-cam.x)*scale,y:H/2+(y-cam.y)*scale}}
@@ -23,13 +23,23 @@ function world(x,y){return {x:(x-W/2)/scale+cam.x,y:(y-H/2)/scale+cam.y}}
 function hash(n){let x=Math.sin(n*127.1+311.7)*43758.5453;return x-Math.floor(x)}
 function shipPosition(ship){
  if(ship.id==='wing-ggr.8290'&&wingAttack){
-  const progress=Math.min(1,Math.max(0,(animationClock-wingAttack.startedAt)/6500));
-  const x=wingAttack.startX+(puffTarget.x+320-wingAttack.startX)*progress;
-  const y=wingAttack.startY+(puffTarget.y+35-wingAttack.startY)*progress+Math.sin(progress*Math.PI)*115;
-  const previousProgress=Math.max(0,progress-.003);
-  const previousX=wingAttack.startX+(puffTarget.x+320-wingAttack.startX)*previousProgress;
-  const previousY=wingAttack.startY+(puffTarget.y+35-wingAttack.startY)*previousProgress+Math.sin(previousProgress*Math.PI)*115;
-  return {x,y,angle:progress===1?Math.PI*1.5:Math.atan2(y-previousY,x-previousX)+Math.PI/2};
+  const elapsed=animationClock-wingAttack.startedAt;
+  const progress=Math.min(1,Math.max(0,elapsed/wingImpactAt));
+  const endX=puffTarget.x+320,endY=puffTarget.y+35;
+  const travelX=endX-wingAttack.startX,travelY=endY-wingAttack.startY-Math.PI*115;
+  const x=wingAttack.startX+travelX*progress;
+  const y=wingAttack.startY+(endY-wingAttack.startY)*progress+Math.sin(progress*Math.PI)*115;
+  if(elapsed<=wingImpactAt){
+   const previousProgress=Math.max(0,progress-.003);
+   const previousX=wingAttack.startX+travelX*previousProgress;
+   const previousY=wingAttack.startY+(endY-wingAttack.startY)*previousProgress+Math.sin(previousProgress*Math.PI)*115;
+   return {x,y,angle:progress===1?Math.atan2(travelY,travelX)+Math.PI/2:Math.atan2(y-previousY,x-previousX)+Math.PI/2};
+  }
+  const departure=elapsed-wingImpactAt;
+  const patrolRadius=360,heading=Math.atan2(travelY,travelX),startAngle=heading-Math.PI/2;
+  const centerX=endX-patrolRadius*Math.cos(startAngle),centerY=endY-patrolRadius*Math.sin(startAngle);
+  const angle=startAngle+departure*Math.hypot(travelX,travelY)/(wingImpactAt*patrolRadius);
+  return {x:centerX+patrolRadius*Math.cos(angle),y:centerY+patrolRadius*Math.sin(angle),angle:angle+Math.PI};
  }
  const phase=animationClock*.00055+(ship.discovered?1:3);
  const x=ship.x+Math.cos(phase)*42,y=ship.y+Math.sin(phase)*28;
@@ -60,6 +70,24 @@ function drawWingEscort(p){
  for(let i=0;i<4;i++){const angle=rotation*1.7+i*Math.PI/2,x=Math.cos(angle)*105*scale,y=Math.sin(angle)*105*scale;ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.strokeStyle='#f0fbff';ctx.shadowBlur=12;ctx.shadowColor='#8deaff';ctx.strokeRect(-5*scale,-5*scale,10*scale,10*scale);ctx.restore()}
  ctx.restore();ctx.shadowBlur=0;
 }
+function drawPuffExplosion(){
+ if(!wingAttack)return;
+ const elapsed=animationClock-wingAttack.startedAt-wingImpactAt;
+ if(elapsed<0||elapsed>wingBlastDuration)return;
+ const progress=elapsed/wingBlastDuration,fade=1-progress,center=screen(puffTarget.x,puffTarget.y);
+ const radius=(18+125*progress)*scale;
+ ctx.save();ctx.globalAlpha=fade;
+ const glow=ctx.createRadialGradient(center.x,center.y,0,center.x,center.y,Math.max(1,radius));
+ glow.addColorStop(0,'#ffffff');glow.addColorStop(.18,'#fff4ad');glow.addColorStop(.52,'#ff692d');glow.addColorStop(1,'#ff321000');
+ ctx.fillStyle=glow;ctx.beginPath();ctx.arc(center.x,center.y,Math.max(1,radius),0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle='#ffe9ae';ctx.lineWidth=Math.max(1,3*scale);ctx.shadowBlur=24;ctx.shadowColor='#ff6b35';
+ ctx.beginPath();ctx.arc(center.x,center.y,Math.max(1,(20+165*progress)*scale),0,Math.PI*2);ctx.stroke();
+ for(let i=0;i<12;i++){
+  const angle=i*Math.PI/6,travel=radius*(.55+(i%3)*.22),x=center.x+Math.cos(angle)*travel,y=center.y+Math.sin(angle)*travel;
+  ctx.fillStyle=i%2?'#ff8b38':'#fff1a6';ctx.beginPath();ctx.arc(x,y,Math.max(1,(3+4*(1-progress))*scale),0,Math.PI*2);ctx.fill();
+ }
+ ctx.restore();ctx.shadowBlur=0;
+}
 function seededDots(wx,wy){ // deterministic, viewport-only procedural nodes; 90M virtual field
  const chunk=620, minX=Math.floor(wx/chunk)-2,maxX=Math.floor((wx+W/scale)/chunk)+2,minY=Math.floor(wy/chunk)-2,maxY=Math.floor((wy+H/scale)/chunk)+2;
  const out=[];
@@ -83,7 +111,7 @@ function draw(){if(!ctx)return;ctx.clearRect(0,0,W,H);
  // virtual dots
  for(const d of field){let phase=animationClock*.00055+(d.x+d.y)*.001;let pack=hash(Math.floor(d.x/260)+Math.floor(d.y/260)*31),gather=1-Math.exp(-animationClock*.000018);let driftX=Math.sin(phase+pack*8)*4+Math.cos(phase*.63+pack*17)*2;let driftY=Math.cos(phase*.9+pack*11)*4+Math.sin(phase*.7+pack*23)*2;let pos=repelFromWing(d.x+(d.packX-d.x)*gather+driftX,d.y+(d.packY-d.y)*gather+driftY),p=screen(pos.x,pos.y);if(p.x<-8||p.x>W+8||p.y<-8||p.y>H+8)continue;ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.7,d.r*scale),0,Math.PI*2);ctx.fillStyle=d.c;ctx.shadowBlur=scale>0.45?8:3;ctx.shadowColor=d.c;ctx.fill();ctx.shadowBlur=0;}
  // active congregation: same-color signals drift into loose packs
- for(const d of dots){let p=screen(d.x,d.y),r=Math.max(4,7*scale);ctx.beginPath();ctx.arc(p.x,p.y,r+7*scale,0,Math.PI*2);ctx.fillStyle=d.color+'22';ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=d.color;ctx.shadowBlur=24;ctx.shadowColor=d.color;ctx.fill();ctx.shadowBlur=0;
+ for(const d of dots){if(d===puffTarget&&wingAttack&&animationClock-wingAttack.startedAt>=wingImpactAt)continue;let p=screen(d.x,d.y),r=Math.max(4,7*scale);ctx.beginPath();ctx.arc(p.x,p.y,r+7*scale,0,Math.PI*2);ctx.fillStyle=d.color+'22';ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=d.color;ctx.shadowBlur=24;ctx.shadowColor=d.color;ctx.fill();ctx.shadowBlur=0;
  ctx.font=`700 ${Math.max(9,11*scale)}px monospace`;ctx.textAlign='center';ctx.fillStyle='#e7faff';ctx.fillText(d.name,p.x,p.y-13*scale);if(d.title&&scale>.48){ctx.font=`${Math.max(7,8*scale)}px monospace`;ctx.fillStyle=d.color;ctx.fillText(d.title,p.x,p.y+22*scale)}}
  // tower nodes
  for(const t of towersData){let p=screen(t.x,t.y),r=Math.max(7,10*scale);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(Math.PI/4);ctx.fillStyle='#ffac68';ctx.shadowColor='#ff8a4b';ctx.shadowBlur=20;ctx.fillRect(-r,-r,r*2,r*2);ctx.restore();ctx.shadowBlur=0;ctx.font=`${Math.max(8,9*scale)}px monospace`;ctx.textAlign='center';ctx.fillStyle='#ffc38a';ctx.fillText('TOWER',p.x,p.y-17*scale)}
@@ -97,19 +125,13 @@ function draw(){if(!ctx)return;ctx.clearRect(0,0,W,H);
   else{ctx.fillStyle=ship.color;ctx.shadowBlur=18;ctx.shadowColor=ship.color;ctx.fillRect(-w/2,-h/2,w,h)}
   ctx.restore();ctx.font=`700 ${Math.max(8,10*scale)}px monospace`;ctx.textAlign='center';ctx.fillStyle=isWing?'#ffffff':ship.discovered?'#ff9aa7':'#e7f8ff';ctx.fillText(isWing?ship.name:ship.discovered?'DISCOVERED VESSEL':'UNKNOWN CONTACT',p.x,p.y-h/2-10);
  }
- // beam exchange during an incident
- if(beam&&incident){
-  if(wingAttack&&animationClock-wingAttack.startedAt>5600){
+  if(wingAttack&&animationClock-wingAttack.startedAt<wingImpactAt){
    const wing=shipPosition(ships[2]),a=screen(wing.x-150,wing.y),b=screen(puffTarget.x,puffTarget.y),pulse=.72+.28*Math.sin(animationClock*.025),jitter=Math.sin(animationClock*.013)*7;
-   ctx.save();ctx.globalAlpha=pulse;ctx.lineCap='round';
-   for(const [color,width,blur,offset] of [['#8c43ff',12,40,0],['#ff3eae',6,26,jitter],['#f5fbff',2,14,-jitter*.35]]){ctx.strokeStyle=color;ctx.lineWidth=Math.max(width*scale,1);ctx.shadowBlur=blur;ctx.shadowColor=color;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo((a.x+b.x)/2+jitter*scale,b.y-35*scale+offset*scale);ctx.lineTo(b.x,b.y);ctx.stroke()}
-   ctx.fillStyle='#ffffff';ctx.shadowBlur=36;ctx.shadowColor='#ff48dd';ctx.beginPath();ctx.arc(b.x,b.y,Math.max(7,12*scale)*pulse,0,Math.PI*2);ctx.fill();ctx.restore();
-  }else{
-   let a=screen(beam.from.x,beam.from.y),b=screen(beam.to.x,beam.to.y),pulse=.65+.35*Math.sin(animationClock*.018);ctx.save();ctx.globalAlpha=pulse;ctx.lineCap='round';ctx.shadowBlur=28;ctx.shadowColor='#ff4e75';ctx.strokeStyle='#ff315f';ctx.lineWidth=Math.max(2,4*scale);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.shadowBlur=10;ctx.strokeStyle='#fff4f7';ctx.lineWidth=Math.max(1,1.5*scale);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.restore();
+   if(animationClock-wingAttack.startedAt>5600){ctx.save();ctx.globalAlpha=pulse;ctx.lineCap='round';
+    for(const [color,width,blur,offset] of [['#8c43ff',12,40,0],['#ff3eae',6,26,jitter],['#f5fbff',2,14,-jitter*.35]]){ctx.strokeStyle=color;ctx.lineWidth=Math.max(width*scale,1);ctx.shadowBlur=blur;ctx.shadowColor=color;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo((a.x+b.x)/2+jitter*scale,b.y-35*scale+offset*scale);ctx.lineTo(b.x,b.y);ctx.stroke()}
+    ctx.fillStyle='#ffffff';ctx.shadowBlur=36;ctx.shadowColor='#ff48dd';ctx.beginPath();ctx.arc(b.x,b.y,Math.max(7,12*scale)*pulse,0,Math.PI*2);ctx.fill();ctx.restore();}
   }
- }
- // incident radius
- if(incident){for(const d of incident.pair){const center=d===ships[2]&&wingAttack?shipPosition(d):d,p=screen(center.x,center.y);ctx.beginPath();ctx.arc(p.x,p.y,100*scale,0,Math.PI*2);ctx.strokeStyle='#48a8ff';ctx.lineWidth=2;ctx.shadowBlur=25;ctx.shadowColor='#168dff';ctx.stroke();ctx.shadowBlur=0;ctx.beginPath();ctx.arc(p.x,p.y,75*scale,0,Math.PI*2);ctx.strokeStyle='#75caff66';ctx.setLineDash([4,8]);ctx.stroke();ctx.setLineDash([])}}
+  drawPuffExplosion();
  $('#coords').textContent=`X ${Math.round(cam.x).toString().padStart(4,'0')} · Y ${Math.round(cam.y).toString().padStart(4,'0')}`;$('#zoom-label').textContent=scale.toFixed(2)+'×';
 }
 function moveTo(x,y,targetScale=1.2){const start={...cam},ss=scale,st=performance.now(),dur=1100;function step(now){let t=Math.min(1,(now-st)/dur),e=1-Math.pow(1-t,4);cam.x=start.x+(x-start.x)*e;cam.y=start.y+(y-start.y)*e;scale=ss+(targetScale-ss)*e;draw();if(t<1)requestAnimationFrame(step);else if(targetScale>0.8){} }requestAnimationFrame(step)}
@@ -168,18 +190,20 @@ canvas.addEventListener('pointerup',e=>{canvas.classList.remove('dragging');if(!
 canvas.addEventListener('wheel',e=>{e.preventDefault();let before=world(e.clientX,e.clientY);scale=Math.max(.12,Math.min(5,scale*Math.exp(-e.deltaY*.001)));let after=world(e.clientX,e.clientY);cam.x+=before.x-after.x;cam.y+=before.y-after.y;draw()},{passive:false});
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$('#'+b.dataset.close).classList.add('hidden'));
 $('#help').onclick=()=>$('#help-panel').classList.toggle('hidden');
-function showWingAlert(){wingAlertPending=true;$('#alert-kicker').innerHTML='<i class="pulse"></i> WING-GGR.8290 // HOSTILE CONTACT';$('#alert-title').innerHTML='WING-GGR.8290<br><em>INBOUND!</em>';$('#alert-copy').textContent='WING-GGR.8290 is entering the system and lining up an attack on PUFFTHATSOUP. Track the hostile flyby?';$('#alert').classList.remove('hidden')}
 function startWingAttack(){
- wingAlertPending=false;wingAttack={startedAt:performance.now(),startX:puffTarget.x-850,startY:puffTarget.y-180};
- incident={pair:[ships[2],puffTarget]};beam={from:ships[2],to:puffTarget};
- $('#welcome').classList.add('off');$('#alert').classList.add('hidden');$('#warbar').classList.remove('hidden');
+ wingAttack={startedAt:performance.now(),startX:puffTarget.x-850,startY:puffTarget.y-180};
+ $('#welcome').classList.add('off');$('#warbar').classList.remove('hidden');
  $('#war-caption').textContent='WING-GGR.8290 × PUFFTHATSOUP · HOSTILE INTERCEPT';moveTo(puffTarget.x,puffTarget.y,1.05);draw();
 }
-function startIncident(){if(incident)return;let pair=[ships[Math.floor(Math.random()*ships.length)],dots[1+Math.floor(Math.random()*(dots.length-1))]];if(Math.random()<.28)pair[1]=ships[pair[0]===ships[0]?1:0];incident={pair};beam={from:pair[0],to:pair[1]};$('#alert-kicker').innerHTML='<i class="pulse"></i> CROSS-FAMILY INCIDENT DETECTED';$('#alert-title').innerHTML='CONGREGATION<br><em>ALERT!</em>';$('#alert-copy').textContent=`${pair[0].name} and ${pair[1].name} have entered a hostile encounter. Signal distance: ${Math.round(Math.hypot(pair[0].x-pair[1].x,pair[0].y-pair[1].y)).toLocaleString()} map units. Vessel weapons are responding. View the live engagement?` ;$('#alert').classList.remove('hidden');try{audio.currentTime=0;audio.play().catch(()=>{})}catch{}}
-$('#alert-yes').onclick=()=>{if(wingAlertPending){startWingAttack();return}if(!incident)return;$('#alert').classList.add('hidden');$('#warbar').classList.remove('hidden');$('#war-caption').textContent=`${incident.pair[0].name} × ${incident.pair[1].name} · RAID IN PROGRESS`;let x=(incident.pair[0].x+incident.pair[1].x)/2,y=(incident.pair[0].y+incident.pair[1].y)/2;moveTo(x,y,.72);draw()};
-function endIncident(){wingAlertPending=false;wingAttack=null;$('#alert').classList.add('hidden');$('#warbar').classList.add('hidden');incident=null;beam=null;draw();notify('Incident view closed.')}
-$('#alert-no').onclick=()=>{if(wingAlertPending){wingAlertPending=false;$('#alert').classList.add('hidden');return}endIncident()};$('#exit-war').onclick=endIncident;$('#alert-now').onclick=startIncident;
-setInterval(()=>{if(!incident&&!wingAlertPending&&Math.random()<.22)startIncident()},26000);
-addEventListener('keydown',e=>{if(e.key==='Escape'){endIncident();$('#profile').classList.add('hidden');$('#tower').classList.add('hidden');$('#help-panel').classList.add('hidden')}});
-resize();draw();showWingAlert();
-function animate(ts){animationClock=ts;draw();requestAnimationFrame(animate)}requestAnimationFrame(animate);
+$('#exit-war').onclick=()=>$('#warbar').classList.add('hidden');
+addEventListener('keydown',e=>{if(e.key==='Escape'){$('#warbar').classList.add('hidden');$('#profile').classList.add('hidden');$('#tower').classList.add('hidden');$('#help-panel').classList.add('hidden')}});
+resize();draw();startWingAttack();
+function animate(ts){
+ animationClock=ts;
+ if(wingAttack&&!wingAttack.impacted&&ts-wingAttack.startedAt>=wingImpactAt){
+  wingAttack.impacted=true;
+  $('#war-caption').textContent='PUFFTHATSOUP DESTROYED · WING-GGR.8290 PATROLLING';
+ }
+ draw();requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
