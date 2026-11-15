@@ -31,7 +31,7 @@ Edit the five entries in `Towers/towers.js`. Towers are independent of family no
 The app represents a 90,000,000-node virtual field. It procedurally generates stable, deterministic decorative nodes only for the visible map area. This avoids creating 90 million DOM/canvas objects at startup and keeps navigation responsive. The ten family profiles and five tower records are explicit editable data.
 
 ## Congregation alerts
-Alerts are simulated locally. They use the supplied `assets/Alert_sound.mp3`, and show a raid radius around the two selected family nodes. Browser audio may require the user to interact with the page first.
+Alerts are simulated locally. The opening alert introduces the WING-GGR.8290 flyby and its attack on PUFFTHATSOUP; the encounter view shows its escort lights and weapon effects. Later random incidents show a raid radius around the selected nodes. Alerts use the supplied `assets/Alert_sound.mp3`, and browser audio may require the user to interact with the page first.
 
 ## Important
 This is a front-end simulation: generated telemetry, member counts, distance values, battles, and tower activity are not live server data. A real community directory with authenticated private family information requires a backend, database, and access control. Do not put sensitive/private records in public JavaScript files.
