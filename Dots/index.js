@@ -5,7 +5,6 @@ import Hazel from './Hazel.js';
 import tidal from './tidal.js';
 import midnight from './midnight.js';
 import cinder from './cinder.js';
-import puff from './puff.js';
 import monolith from './monolith.js';
 import revenge from './revenge.js';
-export default [origin,ember,dramafamily,Hazel,tidal,midnight,cinder,puff,monolith,revenge];
+export default [origin,ember,dramafamily,Hazel,tidal,midnight,cinder,monolith,revenge];
