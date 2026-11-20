@@ -24,3 +24,6 @@
 .ship-mode .stat{background:linear-gradient(145deg,#182844,#0d1428);border-color:#466080;box-shadow:inset 0 0 18px #8edfff0a}
 .ship-mode .stat b{color:#b7f4ff;font-size:19px}
 .ship-mode .private-note{border-left-color:#83eaff;background:linear-gradient(90deg,#17304a,#10182e);color:#d2eaff}
+
+.warbar{top:154px}
+@media(max-width:700px){.warbar{top:190px}}
