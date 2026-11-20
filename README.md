@@ -34,7 +34,7 @@ The app represents a 90,000,000-node virtual field. It procedurally generates st
 WING-GGR.8290 is a newly charted vessel that moves independently across the map. Random congregation alerts are currently disabled.
 
 ## Conflict simulation
-`KILL_SWITCH` in `app.js` starts the conflict automatically when the page loads, bypassing the family-name welcome screen. Undiscovered nodes retreat, return fire, and are removed in a simulated 30-minute battle while the header count decreases. Discovered families and ships are unaffected. Set `KILL_SWITCH` to `false` to restore the normal welcome flow.
+`KILL_SWITCH` in `app.js` starts the conflict automatically when the page loads, bypassing the family-name welcome screen. Undiscovered nodes retreat, return fire, and are removed in a simulated 15-minute battle while the header count decreases. Discovered families and ships are unaffected. Set `KILL_SWITCH` to `false` to restore the normal welcome flow.
 
 ## Important
 This is a front-end simulation: generated telemetry, member counts, distance values, battles, and tower activity are not live server data. A real community directory with authenticated private family information requires a backend, database, and access control. Do not put sensitive/private records in public JavaScript files.

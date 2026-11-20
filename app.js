@@ -5,8 +5,8 @@ const canvas=document.querySelector('#map'),ctx=canvas.getContext('2d');
 const $=s=>document.querySelector(s);
 const KILL_SWITCH=true;
 const FIELD_SIZE=90000000;
-const WAR_DURATION=30*60*1000;
-let W=innerWidth,H=innerHeight,scale=.78,cam={x:0,y:0},drag=null,hover=null,toastTimer=null;
+const WAR_DURATION=15*60*1000;
+let W=innerWidth,H=innerHeight,scale=KILL_SWITCH ? 0.45 : 0.78,cam={x:0,y:0},drag=null,hover=null,toastTimer=null;
 let activeTower=null,activeShip=null,animationClock=0;
 let warElapsed=0,warStartTime=null;
 const shipImages={discovered:new Image(),unknown:new Image(),wing:new Image()};
@@ -54,10 +54,15 @@ function drawWingEscort(p){
  for(let i=0;i<4;i++){const angle=rotation*1.7+i*Math.PI/2,x=Math.cos(angle)*105*scale,y=Math.sin(angle)*105*scale;ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.strokeStyle='#f0fbff';ctx.shadowBlur=12;ctx.shadowColor='#8deaff';ctx.strokeRect(-5*scale,-5*scale,10*scale,10*scale);ctx.restore()}
  ctx.restore();ctx.shadowBlur=0;
 }
-function drawExplosion(x,y,progress,color){
- ctx.save();ctx.globalAlpha=1-progress;ctx.strokeStyle='#ffb56e';ctx.shadowColor=color;ctx.shadowBlur=16;
- ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,(5+progress*22)*Math.max(.7,scale),0,Math.PI*2);ctx.stroke();
- ctx.fillStyle='#fff3c4';ctx.beginPath();ctx.arc(x,y,Math.max(1,3*(1-progress)),0,Math.PI*2);ctx.fill();ctx.restore();
+function drawExplosion(x,y,progress){
+ const radius=4+progress*30;
+ ctx.save();ctx.translate(x,y);ctx.globalAlpha=1-progress;
+ ctx.fillStyle='#080308';ctx.beginPath();ctx.arc(0,0,radius*.48,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle='#ff263f';ctx.shadowColor='#ff102e';ctx.shadowBlur=10;ctx.lineWidth=2;
+ ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();
+ ctx.strokeStyle='#a90020';ctx.shadowBlur=0;ctx.lineWidth=1;
+ for(let i=0;i<8;i++){const angle=i*Math.PI/4+progress*.4,length=radius*(.55+(i%3)*.16);ctx.beginPath();ctx.moveTo(Math.cos(angle)*radius*.35,Math.sin(angle)*radius*.35);ctx.lineTo(Math.cos(angle)*length,Math.sin(angle)*length);ctx.stroke()}
+ ctx.fillStyle='#ff1837';ctx.beginPath();ctx.arc(0,0,Math.max(1,4*(1-progress)),0,Math.PI*2);ctx.fill();ctx.restore();
 }
 function seededDots(wx,wy){ // deterministic, viewport-only procedural nodes; 90M virtual field
  const chunk=620, minX=Math.floor(wx/chunk)-2,maxX=Math.floor((wx+W/scale)/chunk)+2,minY=Math.floor(wy/chunk)-2,maxY=Math.floor((wy+H/scale)/chunk)+2;
@@ -83,7 +88,7 @@ function draw(){if(!ctx)return;ctx.clearRect(0,0,W,H);
  for(const d of field){
   const phase=animationClock*.00055+(d.x+d.y)*.001;
   const pack=hash(Math.floor(d.x/260)+Math.floor(d.y/260)*31);
-  const gather=1-Math.exp(-animationClock*.000018);
+  const gather=KILL_SWITCH?0:1-Math.exp(-animationClock*.000018);
   const driftX=Math.sin(phase+pack*8)*4+Math.cos(phase*.63+pack*17)*2;
   const driftY=Math.cos(phase*.9+pack*11)*4+Math.sin(phase*.7+pack*23)*2;
   const destructionAt=hash((d.x+d.y)*.031+Math.floor(d.x/620)*17)*WAR_DURATION;
@@ -91,7 +96,7 @@ function draw(){if(!ctx)return;ctx.clearRect(0,0,W,H);
    const explosionAge=warElapsed-destructionAt;
    if(explosionAge<750){
     const p=screen(d.x+d.x/(Math.hypot(d.x,d.y)||1)*260,d.y+d.y/(Math.hypot(d.x,d.y)||1)*260);
-    drawExplosion(p.x,p.y,explosionAge/750,d.c);
+    drawExplosion(p.x,p.y,explosionAge/750);
    }
    continue;
   }
@@ -105,7 +110,7 @@ function draw(){if(!ctx)return;ctx.clearRect(0,0,W,H);
   if(retreat>0&&hash(d.x*.13+d.y*.37)>.94&&((warElapsed+hash(d.x+d.y)*1800)%1800)<220){
    const origin=screen(0,0);ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(origin.x,origin.y);ctx.strokeStyle='#ff986b99';ctx.lineWidth=1;ctx.stroke();
   }
-  ctx.beginPath();ctx.arc(p.x,p.y,Math.max(.7,d.r*scale),0,Math.PI*2);ctx.fillStyle=d.c;ctx.shadowBlur=scale>0.45?8:3;ctx.shadowColor=d.c;ctx.fill();ctx.shadowBlur=0;
+  ctx.beginPath();ctx.arc(p.x,p.y,Math.max(KILL_SWITCH?1.5:.7,d.r*scale),0,Math.PI*2);ctx.fillStyle=d.c;ctx.shadowBlur=KILL_SWITCH?1:scale>0.45?8:3;ctx.shadowColor=d.c;ctx.fill();ctx.shadowBlur=0;
  }
  // Discovered families remain intact; any explicitly listed undiscovered families join the retreat.
  for(const d of dots){
@@ -114,13 +119,13 @@ function draw(){if(!ctx)return;ctx.clearRect(0,0,W,H);
    const destructionAt=hash(d.x*.019+d.y*.013)*WAR_DURATION;
    if(warElapsed>=destructionAt){
     const explosionAge=warElapsed-destructionAt,p=screen(x,y);
-    if(explosionAge<750)drawExplosion(p.x,p.y,explosionAge/750,d.color);
+    if(explosionAge<750)drawExplosion(p.x,p.y,explosionAge/750);
     continue;
    }
    const retreat=Math.min(1,Math.max(0,(warElapsed-Math.max(0,destructionAt-10000))/10000));
    const distance=Math.hypot(x,y)||1;x+=x/distance*260*retreat;y+=y/distance*260*retreat;
   }
-  let p=screen(x,y),r=Math.max(4,7*scale);ctx.beginPath();ctx.arc(p.x,p.y,r+7*scale,0,Math.PI*2);ctx.fillStyle=d.color+'22';ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=d.color;ctx.shadowBlur=24;ctx.shadowColor=d.color;ctx.fill();ctx.shadowBlur=0;
+  let p=screen(x,y),r=Math.max(4,7*scale);ctx.beginPath();ctx.arc(p.x,p.y,r+7*scale,0,Math.PI*2);ctx.fillStyle=d.color+'22';ctx.fill();ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fillStyle=d.color;ctx.shadowBlur=KILL_SWITCH?3:24;ctx.shadowColor=d.color;ctx.fill();ctx.shadowBlur=0;
  ctx.font=`700 ${Math.max(9,11*scale)}px monospace`;ctx.textAlign='center';ctx.fillStyle='#e7faff';ctx.fillText(d.name,p.x,p.y-13*scale);if(d.title&&scale>.48){ctx.font=`${Math.max(7,8*scale)}px monospace`;ctx.fillStyle=d.color;ctx.fillText(d.title,p.x,p.y+22*scale)}}
  // tower nodes
  for(const t of towersData){let p=screen(t.x,t.y),r=Math.max(7,10*scale);ctx.save();ctx.translate(p.x,p.y);ctx.rotate(Math.PI/4);ctx.fillStyle='#ffac68';ctx.shadowColor='#ff8a4b';ctx.shadowBlur=20;ctx.fillRect(-r,-r,r*2,r*2);ctx.restore();ctx.shadowBlur=0;ctx.font=`${Math.max(8,9*scale)}px monospace`;ctx.textAlign='center';ctx.fillStyle='#ffc38a';ctx.fillText('TOWER',p.x,p.y-17*scale)}
