@@ -5,7 +5,7 @@ const canvas=document.querySelector('#map'),ctx=canvas.getContext('2d');
 const $=s=>document.querySelector(s);
 const KILL_SWITCH=true;
 const FIELD_SIZE=90000000;
-const WAR_DURATION=15*60*1000;
+const WAR_DURATION=3*60*1000;
 let W=innerWidth,H=innerHeight,scale=KILL_SWITCH ? 0.45 : 0.78,cam={x:0,y:0},drag=null,hover=null,toastTimer=null;
 let activeTower=null,activeShip=null,animationClock=0;
 let warElapsed=0,warStartTime=null;
@@ -54,15 +54,26 @@ function drawWingEscort(p){
  for(let i=0;i<4;i++){const angle=rotation*1.7+i*Math.PI/2,x=Math.cos(angle)*105*scale,y=Math.sin(angle)*105*scale;ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.strokeStyle='#f0fbff';ctx.shadowBlur=12;ctx.shadowColor='#8deaff';ctx.strokeRect(-5*scale,-5*scale,10*scale,10*scale);ctx.restore()}
  ctx.restore();ctx.shadowBlur=0;
 }
-function drawExplosion(x,y,progress){
- const radius=4+progress*30;
+function drawExplosion(x,y,progress,seed){
+ const radius=14+progress*150;
  ctx.save();ctx.translate(x,y);ctx.globalAlpha=1-progress;
- ctx.fillStyle='#080308';ctx.beginPath();ctx.arc(0,0,radius*.48,0,Math.PI*2);ctx.fill();
- ctx.strokeStyle='#ff263f';ctx.shadowColor='#ff102e';ctx.shadowBlur=10;ctx.lineWidth=2;
- ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.stroke();
- ctx.strokeStyle='#a90020';ctx.shadowBlur=0;ctx.lineWidth=1;
- for(let i=0;i<8;i++){const angle=i*Math.PI/4+progress*.4,length=radius*(.55+(i%3)*.16);ctx.beginPath();ctx.moveTo(Math.cos(angle)*radius*.35,Math.sin(angle)*radius*.35);ctx.lineTo(Math.cos(angle)*length,Math.sin(angle)*length);ctx.stroke()}
- ctx.fillStyle='#ff1837';ctx.beginPath();ctx.arc(0,0,Math.max(1,4*(1-progress)),0,Math.PI*2);ctx.fill();ctx.restore();
+ const blast=ctx.createRadialGradient(0,0,0,0,0,radius);
+ blast.addColorStop(0,'#020104');blast.addColorStop(.22,'#180309');blast.addColorStop(.58,'#aa0928aa');blast.addColorStop(1,'#ff173500');
+ ctx.fillStyle=blast;ctx.beginPath();ctx.arc(0,0,radius,0,Math.PI*2);ctx.fill();
+ ctx.strokeStyle='#ff183f';ctx.shadowColor='#ff082e';ctx.shadowBlur=24;ctx.lineWidth=3;
+ ctx.beginPath();ctx.arc(0,0,radius*.82,0,Math.PI*2);ctx.stroke();
+ for(let bolt=0;bolt<9;bolt++){
+  const angle=hash(seed+bolt*13.7)*Math.PI*2,length=radius*(.65+hash(seed+bolt*29.3)*.65);
+  ctx.beginPath();ctx.moveTo(0,0);
+  for(let step=1;step<=6;step++){
+   const t=step/6,jag=(hash(seed+bolt*43+step*17)-.5)*radius*.34*(1-t*.45);
+   const distance=length*t;
+   ctx.lineTo(Math.cos(angle)*distance-Math.sin(angle)*jag,Math.sin(angle)*distance+Math.cos(angle)*jag);
+  }
+  ctx.strokeStyle=bolt%3===0?'#fff0f3':'#ff2445';ctx.shadowColor='#ff183f';ctx.shadowBlur=18;ctx.lineWidth=bolt%3===0?2.5:1.5;ctx.stroke();
+ }
+ ctx.shadowBlur=0;ctx.fillStyle='#030205';ctx.beginPath();ctx.arc(0,0,radius*.2,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#ff1837';ctx.beginPath();ctx.arc(0,0,Math.max(2,7*(1-progress)),0,Math.PI*2);ctx.fill();ctx.restore();
 }
 function seededDots(wx,wy){ // deterministic, viewport-only procedural nodes; 90M virtual field
  const chunk=620, minX=Math.floor(wx/chunk)-2,maxX=Math.floor((wx+W/scale)/chunk)+2,minY=Math.floor(wy/chunk)-2,maxY=Math.floor((wy+H/scale)/chunk)+2;
@@ -94,9 +105,9 @@ function draw(){if(!ctx)return;ctx.clearRect(0,0,W,H);
   const destructionAt=hash((d.x+d.y)*.031+Math.floor(d.x/620)*17)*WAR_DURATION;
   if(KILL_SWITCH&&warElapsed>=destructionAt){
    const explosionAge=warElapsed-destructionAt;
-   if(explosionAge<750){
+   if(explosionAge<800){
     const p=screen(d.x+d.x/(Math.hypot(d.x,d.y)||1)*260,d.y+d.y/(Math.hypot(d.x,d.y)||1)*260);
-    drawExplosion(p.x,p.y,explosionAge/750);
+    drawExplosion(p.x,p.y,explosionAge/800,d.x*31+d.y*17);
    }
    continue;
   }
@@ -119,7 +130,7 @@ function draw(){if(!ctx)return;ctx.clearRect(0,0,W,H);
    const destructionAt=hash(d.x*.019+d.y*.013)*WAR_DURATION;
    if(warElapsed>=destructionAt){
     const explosionAge=warElapsed-destructionAt,p=screen(x,y);
-    if(explosionAge<750)drawExplosion(p.x,p.y,explosionAge/750);
+    if(explosionAge<800)drawExplosion(p.x,p.y,explosionAge/800,d.x*31+d.y*17);
     continue;
    }
    const retreat=Math.min(1,Math.max(0,(warElapsed-Math.max(0,destructionAt-10000))/10000));
